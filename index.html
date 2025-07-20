@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>A Quinta Era do Éter - Sistema de Fichas</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
-    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
     <style>
         :root {
             --bg-dark: #121212;
@@ -1548,19 +1545,23 @@
     <div class="toast" id="toast"></div>
 
     <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Firebase Config (crie seu projeto em https://console.firebase.google.com/)
+document.addEventListener('DOMContentLoaded', async function () {
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js");
+    const { getAnalytics } = await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-analytics.js");
+
     const firebaseConfig = {
         apiKey: "AIzaSyALPUrUbxV5WHjDLoev0iUTHYkj-EsaOX4",
         authDomain: "era-do-eter.firebaseapp.com",
-        databaseURL: "https://era-do-eter-default-rtdb.firebaseio.com",
         projectId: "era-do-eter",
-        storageBucket: "era-do-eter.appspot.com",
-        messagingSenderId: "123456789012",
-        appId: "1:123456789012:web:abcdefghijklmnopqrstuvwxyz"
+        storageBucket: "era-do-eter.firebasestorage.app",
+        messagingSenderId: "946835609657",
+        appId: "1:946835609657:web:80c89d5bc95cf1694755e8",
+        measurementId: "G-XRCPBXY5N4"
     };
-    firebase.initializeApp(firebaseConfig);
 
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+        
     // Elementos do DOM
     const elements = {
         hubView: document.getElementById('hub-view'),
