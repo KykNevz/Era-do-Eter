@@ -1196,6 +1196,40 @@
     </style>
 </head>
 <body>
+    <!-- Modal de senha global -->
+<div class="modal" id="global-password-modal" style="display:flex;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Acesso ao Sistema</h2>
+        </div>
+        <div class="form-group">
+            <label for="global-password-input">Senha:</label>
+            <input type="password" id="global-password-input" placeholder="Digite a senha">
+        </div>
+        <div class="modal-actions">
+            <button id="global-password-btn" class="action-btn primary">Entrar</button>
+        </div>
+        <div id="global-password-error" style="color:var(--danger-color);margin-top:10px;display:none;">Senha incorreta!</div>
+    </div>
+</div>
+
+<!-- Modal de seleção de usuário -->
+<div class="modal" id="user-select-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Selecione seu tipo de usuário</h2>
+        </div>
+        <div class="modal-actions" style="flex-direction:column;gap:15px;">
+            <button id="select-master-btn" class="action-btn primary">Mestre</button>
+            <div>
+                <label for="player-name-select" style="color:var(--text-secondary);margin-bottom:5px;">Jogador:</label>
+                <select id="player-name-select" style="width:100%;margin-bottom:10px;"></select>
+                <button id="select-player-btn" class="action-btn">Entrar como Jogador</button>
+            </div>
+        </div>
+    </div>
+</div>
+
     <!-- Hub de Fichas -->
     <div class="hub-view" id="hub-view">
         <div class="container">
@@ -1577,7 +1611,15 @@
                 column2: document.getElementById('column-2'),
                 
                 // Common elements
-                toast: document.getElementById('toast')
+                toast: document.getElementById('toast'),
+                globalPasswordModal: document.getElementById('global-password-modal'),
+                globalPasswordInput: document.getElementById('global-password-input'),
+                globalPasswordBtn: document.getElementById('global-password-btn'),
+                globalPasswordError: document.getElementById('global-password-error'),
+                userSelectModal: document.getElementById('user-select-modal'),
+                selectMasterBtn: document.getElementById('select-master-btn'),
+                playerNameSelect: document.getElementById('player-name-select'),
+                selectPlayerBtn: document.getElementById('select-player-btn')
             };
 
             // Estado da aplicação
@@ -1592,7 +1634,10 @@
                     draggedIndex: -1,
                     isEditMode: false,
                     draggedItem: null,
-                    draggedAbility: null
+                    draggedAbility: null,
+                    globalPassword: '12345',
+                    userType: null, // 'master' ou 'player'
+                    playerName: null,
                 }
             };
 
@@ -1612,10 +1657,80 @@
 
             // Inicializar a aplicação
             function init() {
+                showGlobalPasswordModal();
                 checkUserType();
                 loadSheets();
                 setupEventListeners();
                 checkUrlForSheet();
+            }
+            // Mostrar modal de senha global
+            function showGlobalPasswordModal() {
+                elements.globalPasswordModal.style.display = 'flex';
+                elements.hubView.style.display = 'none';
+                elements.sheetView.style.display = 'none';
+                elements.globalPasswordBtn.onclick = function() {
+                    if (elements.globalPasswordInput.value === state.globalPassword) {
+                        elements.globalPasswordModal.style.display = 'none';
+                        showUserSelectModal();
+                    } else {
+                        elements.globalPasswordError.style.display = 'block';
+                    }
+                };
+                elements.globalPasswordInput.oninput = function() {
+                    elements.globalPasswordError.style.display = 'none';
+                };
+            }
+
+            // Mostrar modal de seleção de usuário
+            function showUserSelectModal() {
+                elements.userSelectModal.style.display = 'flex';
+                // Carregar nomes dos jogadores das fichas
+                const savedSheets = localStorage.getItem('rpgSheets');
+                let playerNames = [];
+                if (savedSheets) {
+                    try {
+                        const sheets = JSON.parse(savedSheets);
+                        playerNames = [...new Set(sheets.map(s => s.playerName).filter(n => n))];
+                    } catch {}
+                }
+                elements.playerNameSelect.innerHTML = playerNames.map(name => `<option value="${name}">${name}</option>`).join('');
+                elements.selectMasterBtn.onclick = function() {
+                    state.userType = 'master';
+                    localStorage.setItem('rpgUserType', 'master');
+                    elements.userSelectModal.style.display = 'none';
+                    state.isMaster = true;
+                    loadSheets();
+                    setupEventListeners();
+                    showHub();
+                };
+                elements.selectPlayerBtn.onclick = function() {
+                    const name = elements.playerNameSelect.value;
+                    if (name) {
+                        state.userType = 'player';
+                        state.playerName = name;
+                        localStorage.setItem('rpgUserType', 'player');
+                        localStorage.setItem('rpgPlayerName', name);
+                        elements.userSelectModal.style.display = 'none';
+                        state.isMaster = false;
+                        loadSheets();
+                        setupEventListeners();
+                        showHub();
+                    }
+                };
+            }
+
+            // Verificar tipo de usuário salvo
+            function checkUserType() {
+                const userType = localStorage.getItem('rpgUserType');
+                const playerName = localStorage.getItem('rpgPlayerName');
+                if (userType === 'master') {
+                    state.isMaster = true;
+                } else if (userType === 'player' && playerName) {
+                    state.isMaster = false;
+                    state.playerName = playerName;
+                    document.body.classList.add('view-only');
+                    elements.backBtn.style.display = 'none';
+                }
             }
 
             // Verificar se é mestre ou jogador
@@ -1684,7 +1799,9 @@
                 elements.sheetsContainer.innerHTML = '';
                 
                 let sheetsToRender = state.sheets;
-                
+                if (!state.isMaster && state.playerName) {
+                    sheetsToRender = state.sheets.filter(sheet => sheet.playerName === state.playerName);
+                }
                 // Aplicar filtro se houver
                 if (filter) {
                     const searchTerm = filter.toLowerCase();
@@ -2702,14 +2819,6 @@
                     if (!sheet) return;
                     
                     // Atualizar dados básicos
-                    sheet.characterName = elements.characterName.value;
-                    sheet.playerName = elements.playerName.value;
-                    sheet.deity = elements.deity.value;
-                    sheet.age = elements.age.value;
-                    sheet.etherLevel = elements.etherLevel.value;
-                    sheet.potential = elements.potential.value;
-                    sheet.awakening = elements.awakening.value;
-                    sheet.armor = elements.armor.value;
                     sheet.strength = elements.strength.value;
                     sheet.dexterity = elements.dexterity.value;
                     sheet.constitution = elements.constitution.value;
