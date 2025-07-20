@@ -651,6 +651,11 @@
             font-size: 0.8rem;
         }
 
+        .ability-cost input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
         .ability-desc {
             font-size: 0.85rem;
             color: var(--text-primary);
@@ -1143,6 +1148,34 @@
             opacity: 1;
         }
 
+        .view-only .editable,
+        .view-only .action-btn:not(.back-btn),
+        .view-only .resource-btn,
+        .view-only .delete-btn,
+        .view-only .ability-use-btn,
+        .view-only .delete-ability,
+        .view-only .delete-weapon,
+        .view-only .delete-item,
+        .view-only .add-ability-btn,
+        .view-only .add-weapon-btn,
+        .view-only .add-item-btn,
+        .view-only .toggle-edit {
+            display: none !important;
+        }
+
+        .view-only input.editable,
+        .view-only textarea.editable,
+        .view-only select.editable {
+            background: transparent !important;
+            border: none !important;
+            pointer-events: none !important;
+            color: var(--text-primary) !important;
+        }
+
+        .view-only .panel {
+            cursor: default !important;
+        }
+
         @media (max-width: 1024px) {
             .main-grid {
                 grid-template-columns: 1fr;
@@ -1579,6 +1612,7 @@
             const state = {
                 sheets: [],
                 currentSheetId: null,
+                isMaster: true, // Por padrão assume que é o mestre
                 dragState: {
                     isDragging: false,
                     draggedPanel: null,
@@ -1606,9 +1640,22 @@
 
             // Inicializar a aplicação
             function init() {
+                checkUserType();
                 loadSheets();
                 setupEventListeners();
                 checkUrlForSheet();
+            }
+
+            // Verificar se é mestre ou jogador
+            function checkUserType() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const isViewOnly = urlParams.has('view');
+                state.isMaster = !isViewOnly;
+                
+                if (!state.isMaster) {
+                    document.body.classList.add('view-only');
+                    elements.backBtn.style.display = 'none';
+                }
             }
 
             // Verificar URL por parâmetro de ficha
@@ -1619,12 +1666,20 @@
                 if (sheetId) {
                     openSheet(sheetId);
                 } else {
-                    showHub();
+                    if (state.isMaster) {
+                        showHub();
+                    } else {
+                        // Jogadores sem ficha específica podem ser redirecionados ou mostrar mensagem
+                        elements.sheetView.innerHTML = '<div class="container"><h2>Ficha não encontrada</h2><p>Por favor, solicite ao mestre o link correto para sua ficha.</p></div>';
+                        elements.sheetView.style.display = 'block';
+                    }
                 }
             }
 
-            // Mostrar hub
+            // Mostrar hub (apenas para mestre)
             function showHub() {
+                if (!state.isMaster) return;
+                
                 elements.hubView.style.display = 'block';
                 elements.sheetView.style.display = 'none';
                 window.history.pushState({ view: 'hub' }, '', window.location.pathname);
@@ -1634,11 +1689,18 @@
             function showSheet() {
                 elements.hubView.style.display = 'none';
                 elements.sheetView.style.display = 'block';
-                window.history.pushState({ view: 'sheet', sheetId: state.currentSheetId }, '', `?sheet=${state.currentSheetId}`);
+                
+                if (state.isMaster) {
+                    window.history.pushState({ view: 'sheet', sheetId: state.currentSheetId }, '', `?sheet=${state.currentSheetId}`);
+                } else {
+                    window.history.pushState({ view: 'sheet', sheetId: state.currentSheetId }, '', `?sheet=${state.currentSheetId}&view`);
+                }
             }
 
-            // Carregar fichas do armazenamento local
+            // Carregar fichas do armazenamento local (apenas para mestre)
             function loadSheets() {
+                if (!state.isMaster) return;
+                
                 const savedSheets = localStorage.getItem('rpgSheets');
                 if (savedSheets) {
                     try {
@@ -1650,8 +1712,10 @@
                 }
             }
 
-            // Renderizar fichas na tela
+            // Renderizar fichas na tela (apenas para mestre)
             function renderSheets(filter = '') {
+                if (!state.isMaster) return;
+                
                 elements.sheetsContainer.innerHTML = '';
                 
                 let sheetsToRender = state.sheets;
@@ -1771,12 +1835,16 @@
                 sheet.updatedAt = new Date().toISOString();
                 
                 saveSheets();
-                renderSheets(elements.searchInput.value.trim());
+                if (state.isMaster) {
+                    renderSheets(elements.searchInput.value.trim());
+                }
                 showToast('Valores atualizados com sucesso!');
             }
 
-            // Criar uma nova ficha
+            // Criar uma nova ficha (apenas para mestre)
             function createNewSheet() {
+                if (!state.isMaster) return;
+                
                 const characterName = elements.newSheetName.value.trim();
                 const playerName = elements.newSheetPlayer.value.trim();
                 
@@ -1860,18 +1928,62 @@
                 openSheet(newSheet.id);
             }
 
-            // Abrir ficha para edição
+            // Abrir ficha para edição/visualização
             function openSheet(sheetId) {
-                const sheet = state.sheets.find(s => s.id === sheetId);
-                if (!sheet) {
-                    showToast('Ficha não encontrada');
-                    showHub();
+                let sheet;
+                
+                // Se for mestre, busca na lista local
+                if (state.isMaster) {
+                    sheet = state.sheets.find(s => s.id === sheetId);
+                    if (!sheet) {
+                        showToast('Ficha não encontrada');
+                        showHub();
+                        return;
+                    }
+                    state.currentSheetId = sheetId;
+                    loadSheetData(sheet);
+                    showSheet();
                     return;
                 }
                 
-                state.currentSheetId = sheetId;
-                loadSheetData(sheet);
-                showSheet();
+                // Se for jogador, carrega da URL ou localStorage
+                const urlParams = new URLSearchParams(window.location.search);
+                const sheetData = urlParams.get('data');
+                
+                if (sheetData) {
+                    try {
+                        // Decodificar os dados da ficha da URL
+                        sheet = JSON.parse(decodeURIComponent(sheetData));
+                        state.currentSheetId = sheet.id;
+                        loadSheetData(sheet);
+                        showSheet();
+                    } catch (e) {
+                        console.error("Erro ao carregar ficha da URL:", e);
+                        elements.sheetView.innerHTML = '<div class="container"><h2>Erro ao carregar ficha</h2><p>Por favor, solicite ao mestre um novo link.</p></div>';
+                        elements.sheetView.style.display = 'block';
+                    }
+                } else {
+                    // Tentar carregar do localStorage (para jogadores que já acessaram antes)
+                    const savedSheets = localStorage.getItem('playerSheets');
+                    if (savedSheets) {
+                        try {
+                            const sheets = JSON.parse(savedSheets);
+                            sheet = sheets.find(s => s.id === sheetId);
+                            if (sheet) {
+                                state.currentSheetId = sheetId;
+                                loadSheetData(sheet);
+                                showSheet();
+                                return;
+                            }
+                        } catch (e) {
+                            console.error("Erro ao carregar fichas do jogador:", e);
+                        }
+                    }
+                    
+                    // Se não encontrou a ficha
+                    elements.sheetView.innerHTML = '<div class="container"><h2>Ficha não encontrada</h2><p>Por favor, solicite ao mestre o link correto para sua ficha.</p></div>';
+                    elements.sheetView.style.display = 'block';
+                }
             }
 
             // Carregar dados da ficha
@@ -2019,7 +2131,7 @@
             function addAbility(name, ether, grade, description, type, duration, range, collapsed = false) {
                 const abilityItem = document.createElement('div');
                 abilityItem.className = `ability-item ${collapsed ? 'collapsed' : ''}`;
-                abilityItem.draggable = true;
+                abilityItem.draggable = state.isMaster;
                 abilityItem.innerHTML = `
                     <div class="ability-header">
                         <div class="ability-name">
@@ -2048,14 +2160,16 @@
                 `;
                 elements.abilitiesContainer.appendChild(abilityItem);
                 
-                // Adicionar evento para o botão de deletar
-                abilityItem.querySelector('.delete-ability').addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    if (confirm('Tem certeza que deseja remover esta habilidade?')) {
-                        abilityItem.remove();
-                        saveCurrentSheet();
-                    }
-                });
+                // Adicionar evento para o botão de deletar (apenas para mestre)
+                if (state.isMaster) {
+                    abilityItem.querySelector('.delete-ability').addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        if (confirm('Tem certeza que deseja remover esta habilidade?')) {
+                            abilityItem.remove();
+                            saveCurrentSheet();
+                        }
+                    });
+                }
                 
                 // Adicionar evento para o botão de usar
                 abilityItem.querySelector('.use-ability').addEventListener('click', function() {
@@ -2101,8 +2215,10 @@
                     saveCurrentSheet();
                 });
 
-                // Configurar arrastar e soltar para a habilidade
-                setupAbilityDragAndDrop(abilityItem);
+                // Configurar arrastar e soltar para a habilidade (apenas para mestre)
+                if (state.isMaster) {
+                    setupAbilityDragAndDrop(abilityItem);
+                }
             }
 
             // Configurar arrastar e soltar para habilidades
@@ -2124,6 +2240,8 @@
 
             // Configurar zona de soltar para habilidades
             function setupAbilitiesDropZone() {
+                if (!state.isMaster) return;
+                
                 elements.abilitiesContainer.addEventListener('dragover', function(e) {
                     e.preventDefault();
                     e.dataTransfer.dropEffect = 'move';
@@ -2221,13 +2339,15 @@
                 `;
                 elements.weaponsBody.appendChild(row);
                 
-                // Adicionar evento para o botão de deletar
-                row.querySelector('.delete-weapon').addEventListener('click', function() {
-                    if (confirm('Tem certeza que deseja remover esta arma?')) {
-                        row.remove();
-                        saveCurrentSheet();
-                    }
-                });
+                // Adicionar evento para o botão de deletar (apenas para mestre)
+                if (state.isMaster) {
+                    row.querySelector('.delete-weapon').addEventListener('click', function() {
+                        if (confirm('Tem certeza que deseja remover esta arma?')) {
+                            row.remove();
+                            saveCurrentSheet();
+                        }
+                    });
+                }
                 
                 // Adicionar evento para salvar ao editar
                 row.querySelectorAll('input').forEach(input => {
@@ -2246,7 +2366,7 @@
             function addItem(quantity, name, description, carrying, collapsed = false) {
                 const item = document.createElement('div');
                 item.className = `inventory-item ${collapsed ? 'collapsed' : ''}`;
-                item.draggable = true;
+                item.draggable = state.isMaster;
                 item.innerHTML = `
                     <div class="item-header">
                         <div class="item-name">
@@ -2265,14 +2385,16 @@
                 `;
                 elements.inventoryContainer.appendChild(item);
                 
-                // Adicionar evento para o botão de deletar
-                item.querySelector('.delete-item').addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    if (confirm('Tem certeza que deseja remover este item?')) {
-                        item.remove();
-                        saveCurrentSheet();
-                    }
-                });
+                // Adicionar evento para o botão de deletar (apenas para mestre)
+                if (state.isMaster) {
+                    item.querySelector('.delete-item').addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        if (confirm('Tem certeza que deseja remover este item?')) {
+                            item.remove();
+                            saveCurrentSheet();
+                        }
+                    });
+                }
                 
                 // Adicionar evento para recolher/expandir
                 const toggleBtn = item.querySelector('.item-toggle');
@@ -2299,8 +2421,10 @@
                     adjustTextareaHeight(textarea);
                 }, 0);
 
-                // Configurar arrastar e soltar para o item
-                setupInventoryDragAndDrop(item);
+                // Configurar arrastar e soltar para o item (apenas para mestre)
+                if (state.isMaster) {
+                    setupInventoryDragAndDrop(item);
+                }
                 
                 // Adicionar eventos para salvar ao editar
                 item.querySelectorAll('input, textarea').forEach(input => {
@@ -2329,6 +2453,8 @@
 
             // Configurar zona de soltar para itens do inventário
             function setupInventoryDropZone() {
+                if (!state.isMaster) return;
+                
                 elements.inventoryContainer.addEventListener('dragover', function(e) {
                     e.preventDefault();
                     e.dataTransfer.dropEffect = 'move';
@@ -2476,8 +2602,10 @@
                 elements.etherBar.textContent = etherPercent + '%';
             }
 
-            // Alternar modo de edição
+            // Alternar modo de edição (apenas para mestre)
             function toggleEditMode() {
+                if (!state.isMaster) return;
+                
                 state.dragState.isEditMode = !state.dragState.isEditMode;
                 
                 if (state.dragState.isEditMode) {
@@ -2505,9 +2633,9 @@
                 }
             }
 
-            // Iniciar arrastar painel
+            // Iniciar arrastar painel (apenas para mestre)
             function startDrag(e) {
-                if (!state.dragState.isEditMode) return;
+                if (!state.dragState.isEditMode || !state.isMaster) return;
                 
                 const panel = e.target.closest('.panel');
                 if (!panel) return;
@@ -2522,9 +2650,9 @@
                 e.dataTransfer.effectAllowed = 'move';
             }
 
-            // Durante o arrastar
+            // Durante o arrastar (apenas para mestre)
             function dragOver(e) {
-                if (!state.dragState.isDragging || !state.dragState.isEditMode) return;
+                if (!state.dragState.isDragging || !state.dragState.isEditMode || !state.isMaster) return;
                 
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'move';
@@ -2562,9 +2690,9 @@
                 }, { offset: Number.NEGATIVE_INFINITY }).element;
             }
 
-            // Finalizar arrastar
+            // Finalizar arrastar (apenas para mestre)
             function endDrag(e) {
-                if (!state.dragState.isDragging || !state.dragState.isEditMode) return;
+                if (!state.dragState.isDragging || !state.dragState.isEditMode || !state.isMaster) return;
                 
                 e.preventDefault();
                 
@@ -2597,84 +2725,130 @@
             function saveCurrentSheet() {
                 if (!state.currentSheetId) return;
                 
-                const sheet = state.sheets.find(s => s.id === state.currentSheetId);
-                if (!sheet) return;
-                
-                // Atualizar dados básicos
-                sheet.characterName = elements.characterName.value;
-                sheet.playerName = elements.playerName.value;
-                sheet.deity = elements.deity.value;
-                sheet.age = elements.age.value;
-                sheet.etherLevel = elements.etherLevel.value;
-                sheet.potential = elements.potential.value;
-                sheet.awakening = elements.awakening.value;
-                sheet.armor = elements.armor.value;
-                sheet.strength = elements.strength.value;
-                sheet.dexterity = elements.dexterity.value;
-                sheet.constitution = elements.constitution.value;
-                sheet.intelligence = elements.intelligence.value;
-                sheet.wisdom = elements.wisdom.value;
-                sheet.charisma = elements.charisma.value;
-                sheet.hpCurrent = elements.hpCurrent.value;
-                sheet.hpMax = elements.hpMax.value;
-                sheet.etherCurrent = elements.etherCurrent.value;
-                sheet.etherMax = elements.etherMax.value;
-                sheet.notes = elements.notes.value;
-                sheet.updatedAt = new Date().toISOString();
-                
-                // Atualizar layout dos painéis
-                sheet.panelLayout = getCurrentPanelLayout();
-                
-                // Atualizar habilidades
-                sheet.abilities = [];
-                document.querySelectorAll('.ability-item').forEach(ability => {
-                    sheet.abilities.push({
-                        name: ability.querySelector('.ability-name-input').value,
-                        ether: ability.querySelector('.ability-ether').value,
-                        grade: ability.querySelector('.ability-grade').value,
-                        description: ability.querySelector('.ability-desc').value,
-                        type: ability.querySelector('.ability-type').value,
-                        duration: ability.querySelector('.ability-duration').value,
-                        range: ability.querySelector('.ability-range').value,
-                        collapsed: ability.classList.contains('collapsed')
+                // Se for mestre, salva no localStorage
+                if (state.isMaster) {
+                    const sheet = state.sheets.find(s => s.id === state.currentSheetId);
+                    if (!sheet) return;
+                    
+                    // Atualizar dados básicos
+                    sheet.characterName = elements.characterName.value;
+                    sheet.playerName = elements.playerName.value;
+                    sheet.deity = elements.deity.value;
+                    sheet.age = elements.age.value;
+                    sheet.etherLevel = elements.etherLevel.value;
+                    sheet.potential = elements.potential.value;
+                    sheet.awakening = elements.awakening.value;
+                    sheet.armor = elements.armor.value;
+                    sheet.strength = elements.strength.value;
+                    sheet.dexterity = elements.dexterity.value;
+                    sheet.constitution = elements.constitution.value;
+                    sheet.intelligence = elements.intelligence.value;
+                    sheet.wisdom = elements.wisdom.value;
+                    sheet.charisma = elements.charisma.value;
+                    sheet.hpCurrent = elements.hpCurrent.value;
+                    sheet.hpMax = elements.hpMax.value;
+                    sheet.etherCurrent = elements.etherCurrent.value;
+                    sheet.etherMax = elements.etherMax.value;
+                    sheet.notes = elements.notes.value;
+                    sheet.updatedAt = new Date().toISOString();
+                    
+                    // Atualizar layout dos painéis
+                    sheet.panelLayout = getCurrentPanelLayout();
+                    
+                    // Atualizar habilidades
+                    sheet.abilities = [];
+                    document.querySelectorAll('.ability-item').forEach(ability => {
+                        sheet.abilities.push({
+                            name: ability.querySelector('.ability-name-input').value,
+                            ether: ability.querySelector('.ability-ether').value,
+                            grade: ability.querySelector('.ability-grade').value,
+                            description: ability.querySelector('.ability-desc').value,
+                            type: ability.querySelector('.ability-type').value,
+                            duration: ability.querySelector('.ability-duration').value,
+                            range: ability.querySelector('.ability-range').value,
+                            collapsed: ability.classList.contains('collapsed')
+                        });
                     });
-                });
-                
-                // Atualizar armas
-                sheet.weapons = [];
-                document.querySelectorAll('.weapon-row').forEach(weapon => {
-                    sheet.weapons.push({
-                        name: weapon.querySelector('.weapon-name').value,
-                        act: weapon.querySelector('.weapon-act').value,
-                        damage: weapon.querySelector('.weapon-damage').value,
-                        range: weapon.querySelector('.weapon-range').value,
-                        size: weapon.querySelector('.weapon-size').value
+                    
+                    // Atualizar armas
+                    sheet.weapons = [];
+                    document.querySelectorAll('.weapon-row').forEach(weapon => {
+                        sheet.weapons.push({
+                            name: weapon.querySelector('.weapon-name').value,
+                            act: weapon.querySelector('.weapon-act').value,
+                            damage: weapon.querySelector('.weapon-damage').value,
+                            range: weapon.querySelector('.weapon-range').value,
+                            size: weapon.querySelector('.weapon-size').value
+                        });
                     });
-                });
-                
-                // Atualizar inventário
-                sheet.inventory = [];
-                document.querySelectorAll('.inventory-item').forEach(item => {
-                    sheet.inventory.push({
-                        quantity: item.querySelector('.item-quantity').value,
-                        name: item.querySelector('.item-name input').value,
-                        description: item.querySelector('.item-desc').value,
-                        carrying: item.querySelector('.item-carrying').checked,
-                        collapsed: item.classList.contains('collapsed')
+                    
+                    // Atualizar inventário
+                    sheet.inventory = [];
+                    document.querySelectorAll('.inventory-item').forEach(item => {
+                        sheet.inventory.push({
+                            quantity: item.querySelector('.item-quantity').value,
+                            name: item.querySelector('.item-name input').value,
+                            description: item.querySelector('.item-desc').value,
+                            carrying: item.querySelector('.item-carrying').checked,
+                            collapsed: item.classList.contains('collapsed')
+                        });
                     });
-                });
-                
-                // Atualizar perícias
-                sheet.skills = {};
-                defaultSkills.forEach(skill => {
-                    const skillId = `skill-${skill.toLowerCase().replace(/\s+/g, '-')}`;
-                    const skillInput = document.getElementById(skillId);
-                    if (skillInput) {
-                        sheet.skills[skillId] = skillInput.value;
+                    
+                    // Atualizar perícias
+                    sheet.skills = {};
+                    defaultSkills.forEach(skill => {
+                        const skillId = `skill-${skill.toLowerCase().replace(/\s+/g, '-')}`;
+                        const skillInput = document.getElementById(skillId);
+                        if (skillInput) {
+                            sheet.skills[skillId] = skillInput.value;
+                        }
+                    });
+                    
+                    saveSheets();
+                } else {
+                    // Se for jogador, salva no localStorage do jogador
+                    const sheet = {
+                        id: state.currentSheetId,
+                        characterName: elements.characterName.value,
+                        playerName: elements.playerName.value,
+                        deity: elements.deity.value,
+                        age: elements.age.value,
+                        etherLevel: elements.etherLevel.value,
+                        potential: elements.potential.value,
+                        awakening: elements.awakening.value,
+                        armor: elements.armor.value,
+                        strength: elements.strength.value,
+                        dexterity: elements.dexterity.value,
+                        constitution: elements.constitution.value,
+                        intelligence: elements.intelligence.value,
+                        wisdom: elements.wisdom.value,
+                        charisma: elements.charisma.value,
+                        hpCurrent: elements.hpCurrent.value,
+                        hpMax: elements.hpMax.value,
+                        etherCurrent: elements.etherCurrent.value,
+                        etherMax: elements.etherMax.value,
+                        notes: elements.notes.value,
+                        updatedAt: new Date().toISOString(),
+                        // Não salva habilidades, armas e inventário para jogadores
+                        // pois eles não podem editá-los
+                    };
+                    
+                    let playerSheets = [];
+                    const savedSheets = localStorage.getItem('playerSheets');
+                    if (savedSheets) {
+                        try {
+                            playerSheets = JSON.parse(savedSheets);
+                            // Remove a ficha existente se já estiver salva
+                            playerSheets = playerSheets.filter(s => s.id !== state.currentSheetId);
+                        } catch (e) {
+                            console.error("Erro ao carregar fichas do jogador:", e);
+                        }
                     }
-                });
-                
-                saveSheets();
+                    
+                    // Adiciona a ficha atualizada
+                    playerSheets.push(sheet);
+                    localStorage.setItem('playerSheets', JSON.stringify(playerSheets));
+                }
             }
 
             // Obter layout atual dos painéis
@@ -2689,27 +2863,35 @@
                 };
             }
 
-            // Salvar fichas no armazenamento local
+            // Salvar fichas no armazenamento local (apenas para mestre)
             function saveSheets() {
+                if (!state.isMaster) return;
                 localStorage.setItem('rpgSheets', JSON.stringify(state.sheets));
             }
 
-            // Compartilhar ficha
+            // Compartilhar ficha (apenas para mestre)
             function shareSheet(sheetId) {
+                if (!state.isMaster) return;
+                
                 const sheet = state.sheets.find(s => s.id === sheetId);
                 if (!sheet) return;
                 
                 // Criar URL de compartilhamento
                 const currentUrl = window.location.href.split('?')[0];
-                const shareUrl = `${currentUrl}?sheet=${sheetId}`;
+                
+                // Para jogadores, codificar os dados da ficha na URL
+                const sheetData = encodeURIComponent(JSON.stringify(sheet));
+                const shareUrl = `${currentUrl}?sheet=${sheetId}&view&data=${sheetData}`;
                 
                 elements.shareLinkInput.value = shareUrl;
                 elements.shareModal.dataset.sheetId = sheetId;
                 openModal(elements.shareModal);
             }
 
-            // Excluir ficha
+            // Excluir ficha (apenas para mestre)
             function deleteSheet(sheetId) {
+                if (!state.isMaster) return;
+                
                 if (!confirm('Tem certeza que deseja excluir esta ficha? Esta ação não pode ser desfeita.')) {
                     return;
                 }
@@ -2760,83 +2942,87 @@
 
             // Configurar event listeners
             function setupEventListeners() {
-                // Eventos do Hub
-                elements.newSheetBtn.addEventListener('click', () => {
-                    elements.newSheetName.value = '';
-                    elements.newSheetPlayer.value = '';
-                    openModal(elements.newSheetModal);
-                });
-                
-                elements.createSheetBtn.addEventListener('click', createNewSheet);
-                elements.cancelSheetBtn.addEventListener('click', () => closeModal(elements.newSheetModal));
-                
-                // Fechar modais ao clicar no X
-                document.querySelectorAll('.close-modal').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        closeModal(this.closest('.modal'));
+                // Eventos do Hub (apenas para mestre)
+                if (state.isMaster) {
+                    elements.newSheetBtn.addEventListener('click', () => {
+                        elements.newSheetName.value = '';
+                        elements.newSheetPlayer.value = '';
+                        openModal(elements.newSheetModal);
                     });
-                });
-                
-                // Fechar modais ao clicar fora
-                document.querySelectorAll('.modal').forEach(modal => {
-                    modal.addEventListener('click', function(e) {
-                        if (e.target === this) {
-                            closeModal(this);
+                    
+                    elements.createSheetBtn.addEventListener('click', createNewSheet);
+                    elements.cancelSheetBtn.addEventListener('click', () => closeModal(elements.newSheetModal));
+                    
+                    // Fechar modais ao clicar no X
+                    document.querySelectorAll('.close-modal').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            closeModal(this.closest('.modal'));
+                        });
+                    });
+                    
+                    // Fechar modais ao clicar fora
+                    document.querySelectorAll('.modal').forEach(modal => {
+                        modal.addEventListener('click', function(e) {
+                            if (e.target === this) {
+                                closeModal(this);
+                            }
+                        });
+                    });
+                    
+                    elements.refreshBtn.addEventListener('click', () => {
+                        loadSheets();
+                        showToast('Fichas atualizadas');
+                    });
+                    
+                    elements.searchBtn.addEventListener('click', () => {
+                        renderSheets(elements.searchInput.value.trim());
+                    });
+                    
+                    elements.searchInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            renderSheets(elements.searchInput.value.trim());
                         }
                     });
-                });
-                
-                elements.refreshBtn.addEventListener('click', () => {
-                    loadSheets();
-                    showToast('Fichas atualizadas');
-                });
-                
-                elements.searchBtn.addEventListener('click', () => {
-                    renderSheets(elements.searchInput.value.trim());
-                });
-                
-                elements.searchInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        renderSheets(elements.searchInput.value.trim());
-                    }
-                });
-                
-                // Ações nas fichas (editar, compartilhar, excluir)
-                elements.sheetsContainer.addEventListener('click', (e) => {
-                    const sheetCard = e.target.closest('.sheet-card');
-                    if (!sheetCard) return;
                     
-                    const sheetId = sheetCard.dataset.sheetId;
-                    const action = e.target.dataset.action;
+                    // Ações nas fichas (editar, compartilhar, excluir)
+                    elements.sheetsContainer.addEventListener('click', (e) => {
+                        const sheetCard = e.target.closest('.sheet-card');
+                        if (!sheetCard) return;
+                        
+                        const sheetId = sheetCard.dataset.sheetId;
+                        const action = e.target.dataset.action;
+                        
+                        if (!action) return;
+                        
+                        switch (action) {
+                            case 'edit':
+                                openSheet(sheetId);
+                                break;
+                            case 'share':
+                                shareSheet(sheetId);
+                                break;
+                            case 'delete':
+                                deleteSheet(sheetId);
+                                break;
+                            case 'update-all':
+                                // Este caso é tratado individualmente no renderSheets
+                                break;
+                        }
+                    });
                     
-                    if (!action) return;
-                    
-                    switch (action) {
-                        case 'edit':
-                            openSheet(sheetId);
-                            break;
-                        case 'share':
-                            shareSheet(sheetId);
-                            break;
-                        case 'delete':
-                            deleteSheet(sheetId);
-                            break;
-                        case 'update-all':
-                            // Este caso é tratado individualmente no renderSheets
-                            break;
-                    }
-                });
+                    elements.copyLinkBtn.addEventListener('click', copyShareLink);
+                    elements.closeShareBtn.addEventListener('click', () => closeModal(elements.shareModal));
+                }
                 
-                elements.copyLinkBtn.addEventListener('click', copyShareLink);
-                elements.closeShareBtn.addEventListener('click', () => closeModal(elements.shareModal));
-                
-                // Eventos da Ficha
+                // Eventos da Ficha (para todos)
                 elements.backBtn.addEventListener('click', showHub);
                 
                 // Salvar ao mudar qualquer campo
                 document.querySelectorAll('input, textarea, select').forEach(element => {
-                    element.addEventListener('input', saveCurrentSheet);
-                    element.addEventListener('change', saveCurrentSheet);
+                    if (element.classList.contains('editable')) {
+                        element.addEventListener('input', saveCurrentSheet);
+                        element.addEventListener('change', saveCurrentSheet);
+                    }
                 });
                 
                 // Atualizar cálculos quando atributos são alterados
@@ -2854,23 +3040,25 @@
                 elements.etherCurrent.addEventListener('input', updateProgressBars);
                 elements.etherMax.addEventListener('input', updateProgressBars);
                 
-                // Botão para adicionar habilidade
-                elements.addAbilityBtn.addEventListener('click', function() {
-                    addAbility('Nova Habilidade', '0', '1', 'Descrição da habilidade...', 'Passiva', 'Duração', 'Alcance');
-                    saveCurrentSheet();
-                });
-                
-                // Botão para adicionar arma
-                elements.addWeaponBtn.addEventListener('click', function() {
-                    addWeapon('Nova Arma', '', '', '', '');
-                    saveCurrentSheet();
-                });
-                
-                // Botão para adicionar item
-                elements.addItemBtn.addEventListener('click', function() {
-                    addItem('1', 'Novo Item', '', true);
-                    saveCurrentSheet();
-                });
+                // Botão para adicionar habilidade (apenas para mestre)
+                if (state.isMaster) {
+                    elements.addAbilityBtn.addEventListener('click', function() {
+                        addAbility('Nova Habilidade', '0', '1', 'Descrição da habilidade...', 'Passiva', 'Duração', 'Alcance');
+                        saveCurrentSheet();
+                    });
+                    
+                    // Botão para adicionar arma
+                    elements.addWeaponBtn.addEventListener('click', function() {
+                        addWeapon('Nova Arma', '', '', '', '');
+                        saveCurrentSheet();
+                    });
+                    
+                    // Botão para adicionar item
+                    elements.addItemBtn.addEventListener('click', function() {
+                        addItem('1', 'Novo Item', '', true);
+                        saveCurrentSheet();
+                    });
+                }
                 
                 // Botão para aplicar dano
                 elements.applyDamageBtn.addEventListener('click', applyDamage);
@@ -2906,29 +3094,31 @@
                     });
                 }
 
-                // Eventos de arrastar e soltar
-                elements.toggleEditBtn.addEventListener('click', toggleEditMode);
-                
-                document.querySelectorAll('.panel').forEach(panel => {
-                    panel.addEventListener('dragstart', startDrag);
-                    panel.addEventListener('dragend', endDrag);
-                    panel.draggable = state.dragState.isEditMode;
-                });
-                
-                document.querySelectorAll('.grid-column').forEach(column => {
-                    column.addEventListener('dragover', dragOver);
-                    column.addEventListener('dragleave', () => {
-                        const indicator = column.querySelector('.drop-indicator');
-                        if (indicator) indicator.classList.remove('active');
+                // Eventos de arrastar e soltar (apenas para mestre)
+                if (state.isMaster) {
+                    elements.toggleEditBtn.addEventListener('click', toggleEditMode);
+                    
+                    document.querySelectorAll('.panel').forEach(panel => {
+                        panel.addEventListener('dragstart', startDrag);
+                        panel.addEventListener('dragend', endDrag);
+                        panel.draggable = state.dragState.isEditMode;
                     });
-                    column.addEventListener('drop', endDrag);
-                });
+                    
+                    document.querySelectorAll('.grid-column').forEach(column => {
+                        column.addEventListener('dragover', dragOver);
+                        column.addEventListener('dragleave', () => {
+                            const indicator = column.querySelector('.drop-indicator');
+                            if (indicator) indicator.classList.remove('active');
+                        });
+                        column.addEventListener('drop', endDrag);
+                    });
 
-                // Configurar arrastar e soltar para habilidades
-                setupAbilitiesDropZone();
+                    // Configurar arrastar e soltar para habilidades
+                    setupAbilitiesDropZone();
 
-                // Configurar arrastar e soltar para itens do inventário
-                setupInventoryDropZone();
+                    // Configurar arrastar e soltar para itens do inventário
+                    setupInventoryDropZone();
+                }
 
                 // Observar mudanças de tamanho nos painéis
                 const resizeObserver = new ResizeObserver(() => {
@@ -2956,7 +3146,13 @@
                     if (sheetId) {
                         openSheet(sheetId);
                     } else {
-                        showHub();
+                        if (state.isMaster) {
+                            showHub();
+                        } else {
+                            // Jogadores sem ficha específica podem ser redirecionados ou mostrar mensagem
+                            elements.sheetView.innerHTML = '<div class="container"><h2>Ficha não encontrada</h2><p>Por favor, solicite ao mestre o link correto para sua ficha.</p></div>';
+                            elements.sheetView.style.display = 'block';
+                        }
                     }
                 });
             }
