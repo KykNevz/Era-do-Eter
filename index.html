@@ -201,7 +201,7 @@
         }
 
         .resource-controls input {
-            width: 100px; /* Aumentado de 50px para 100px */
+            width: 100px;
             background: var(--bg-darker);
             border: 1px solid var(--edit-border);
             color: var(--text-primary);
@@ -379,7 +379,7 @@
             cursor: grab;
             user-select: none;
             transition: transform 0.1s ease, box-shadow 0.2s ease;
-            min-height: 180px; /* Aumentado de 150px para 180px */
+            min-height: 180px;
             display: flex;
             flex-direction: column;
         }
@@ -1148,34 +1148,6 @@
             opacity: 1;
         }
 
-        .view-only .editable,
-        .view-only .action-btn:not(.back-btn),
-        .view-only .resource-btn,
-        .view-only .delete-btn,
-        .view-only .ability-use-btn,
-        .view-only .delete-ability,
-        .view-only .delete-weapon,
-        .view-only .delete-item,
-        .view-only .add-ability-btn,
-        .view-only .add-weapon-btn,
-        .view-only .add-item-btn,
-        .view-only .toggle-edit {
-            display: none !important;
-        }
-
-        .view-only input.editable,
-        .view-only textarea.editable,
-        .view-only select.editable {
-            background: transparent !important;
-            border: none !important;
-            pointer-events: none !important;
-            color: var(--text-primary) !important;
-        }
-
-        .view-only .panel {
-            cursor: default !important;
-        }
-
         @media (max-width: 1024px) {
             .main-grid {
                 grid-template-columns: 1fr;
@@ -1612,7 +1584,7 @@
             const state = {
                 sheets: [],
                 currentSheetId: null,
-                isMaster: true, // Por padrão assume que é o mestre
+                isMaster: true, // Assume que é mestre por padrão
                 dragState: {
                     isDragging: false,
                     draggedPanel: null,
@@ -1653,7 +1625,6 @@
                 state.isMaster = !isViewOnly;
                 
                 if (!state.isMaster) {
-                    document.body.classList.add('view-only');
                     elements.backBtn.style.display = 'none';
                 }
             }
@@ -1666,13 +1637,7 @@
                 if (sheetId) {
                     openSheet(sheetId);
                 } else {
-                    if (state.isMaster) {
-                        showHub();
-                    } else {
-                        // Jogadores sem ficha específica podem ser redirecionados ou mostrar mensagem
-                        elements.sheetView.innerHTML = '<div class="container"><h2>Ficha não encontrada</h2><p>Por favor, solicite ao mestre o link correto para sua ficha.</p></div>';
-                        elements.sheetView.style.display = 'block';
-                    }
+                    showHub();
                 }
             }
 
@@ -2144,7 +2109,7 @@
                             <span>Grau:</span>
                             <input type="text" class="ability-grade editable" value="${grade}">
                             <button class="ability-use-btn use-ability">Usar</button>
-                            <button class="delete-btn delete-ability">×</button>
+                            ${state.isMaster ? '<button class="delete-btn delete-ability">×</button>' : ''}
                         </div>
                     </div>
                     <textarea class="ability-desc editable">${description}</textarea>
@@ -2162,13 +2127,16 @@
                 
                 // Adicionar evento para o botão de deletar (apenas para mestre)
                 if (state.isMaster) {
-                    abilityItem.querySelector('.delete-ability').addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        if (confirm('Tem certeza que deseja remover esta habilidade?')) {
-                            abilityItem.remove();
-                            saveCurrentSheet();
-                        }
-                    });
+                    const deleteBtn = abilityItem.querySelector('.delete-ability');
+                    if (deleteBtn) {
+                        deleteBtn.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            if (confirm('Tem certeza que deseja remover esta habilidade?')) {
+                                abilityItem.remove();
+                                saveCurrentSheet();
+                            }
+                        });
+                    }
                 }
                 
                 // Adicionar evento para o botão de usar
@@ -2335,7 +2303,7 @@
                     <td><input type="text" class="weapon-damage editable" value="${damage}"></td>
                     <td><input type="text" class="weapon-range editable" value="${range}"></td>
                     <td><input type="text" class="weapon-size editable" value="${size}"></td>
-                    <td><button class="delete-btn delete-weapon">×</button></td>
+                    ${state.isMaster ? '<td><button class="delete-btn delete-weapon">×</button></td>' : '<td></td>'}
                 `;
                 elements.weaponsBody.appendChild(row);
                 
@@ -2372,7 +2340,7 @@
                         <div class="item-name">
                             <span class="item-toggle">${collapsed ? '+' : '-'}</span>
                             <input type="text" class="editable" value="${name}" placeholder="Nome do Item">
-                            <button class="delete-btn delete-item">×</button>
+                            ${state.isMaster ? '<button class="delete-btn delete-item">×</button>' : ''}
                         </div>
                         <div class="item-meta">
                             <span>Qtd:</span>
@@ -2387,13 +2355,16 @@
                 
                 // Adicionar evento para o botão de deletar (apenas para mestre)
                 if (state.isMaster) {
-                    item.querySelector('.delete-item').addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        if (confirm('Tem certeza que deseja remover este item?')) {
-                            item.remove();
-                            saveCurrentSheet();
-                        }
-                    });
+                    const deleteBtn = item.querySelector('.delete-item');
+                    if (deleteBtn) {
+                        deleteBtn.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            if (confirm('Tem certeza que deseja remover este item?')) {
+                                item.remove();
+                                saveCurrentSheet();
+                            }
+                        });
+                    }
                 }
                 
                 // Adicionar evento para recolher/expandir
@@ -2828,9 +2799,7 @@
                         etherCurrent: elements.etherCurrent.value,
                         etherMax: elements.etherMax.value,
                         notes: elements.notes.value,
-                        updatedAt: new Date().toISOString(),
-                        // Não salva habilidades, armas e inventário para jogadores
-                        // pois eles não podem editá-los
+                        updatedAt: new Date().toISOString()
                     };
                     
                     let playerSheets = [];
@@ -3146,13 +3115,7 @@
                     if (sheetId) {
                         openSheet(sheetId);
                     } else {
-                        if (state.isMaster) {
-                            showHub();
-                        } else {
-                            // Jogadores sem ficha específica podem ser redirecionados ou mostrar mensagem
-                            elements.sheetView.innerHTML = '<div class="container"><h2>Ficha não encontrada</h2><p>Por favor, solicite ao mestre o link correto para sua ficha.</p></div>';
-                            elements.sheetView.style.display = 'block';
-                        }
+                        showHub();
                     }
                 });
             }
