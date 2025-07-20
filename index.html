@@ -1095,33 +1095,6 @@
             margin-top: 20px;
         }
 
-        .player-select-section {
-            width: 100%;
-            margin-top: 15px;
-        }
-
-        .player-select-section label {
-            display: block;
-            margin-bottom: 5px;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        .player-select-section select {
-            width: 100%;
-            background: var(--bg-darker);
-            border: 1px solid var(--edit-border);
-            color: var(--text-primary);
-            padding: 8px 10px;
-            border-radius: 4px;
-            font-family: 'Roboto', sans-serif;
-            margin-bottom: 10px;
-        }
-
-        .player-select-section button {
-            width: 100%;
-        }
-
         .toast {
             position: fixed;
             bottom: 20px;
@@ -1188,63 +1161,6 @@
     </style>
 </head>
 <body>
-    <!-- Modal de senha global -->
-<div class="modal" id="global-password-modal" style="display:flex;">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 class="modal-title">Acesso ao Sistema</h2>
-        </div>
-        <div class="form-group">
-            <label for="global-password-input">Senha:</label>
-            <input type="password" id="global-password-input" placeholder="Digite a senha">
-        </div>
-        <div class="modal-actions">
-            <button id="global-password-btn" class="action-btn primary">Entrar</button>
-        </div>
-        <div id="global-password-error" style="color:var(--danger-color);margin-top:10px;display:none;">Senha incorreta!</div>
-    </div>
-</div>
-
-<!-- Modal de seleção de usuário -->
-<div class="modal" id="user-select-modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 class="modal-title">Selecione seu tipo de usuário</h2>
-            <button class="close-modal">&times;</button>
-        </div>
-        <div class="modal-actions">
-            <button id="select-master-btn" class="action-btn primary">Mestre</button>
-            <div class="player-select-section">
-                <label for="player-name-select">Jogador:</label>
-                <select id="player-name-select"></select>
-                <button id="select-player-btn" class="action-btn">Entrar como Jogador</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de Login -->
-<div class="modal" id="login-modal" style="display:flex;">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 class="modal-title">Login</h2>
-        </div>
-        <div class="form-group">
-            <label for="login-email">Email:</label>
-            <input type="email" id="login-email" placeholder="Seu email">
-        </div>
-        <div class="form-group">
-            <label for="login-password">Senha:</label>
-            <input type="password" id="login-password" placeholder="Sua senha">
-        </div>
-        <div class="modal-actions">
-            <button id="login-btn" class="action-btn primary">Entrar</button>
-            <button id="register-btn" class="action-btn">Registrar</button>
-        </div>
-        <div id="login-error" style="color:var(--danger-color);margin-top:10px;display:none;"></div>
-    </div>
-</div>
-
     <!-- Hub de Fichas -->
     <div class="hub-view" id="hub-view">
         <div class="container">
@@ -1545,1308 +1461,1441 @@
     <div class="toast" id="toast"></div>
 
     <script>
-document.addEventListener('DOMContentLoaded', async function () {
-    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js");
-    const { getAnalytics } = await import("https://www.gstatic.com/firebasejs/12.0.0/firebase-analytics.js");
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elementos do DOM
+            const elements = {
+                // Hub elements
+                hubView: document.getElementById('hub-view'),
+                sheetsContainer: document.getElementById('sheets-container'),
+                newSheetBtn: document.getElementById('new-sheet-btn'),
+                refreshBtn: document.getElementById('refresh-btn'),
+                searchInput: document.getElementById('search-input'),
+                searchBtn: document.getElementById('search-btn'),
+                newSheetModal: document.getElementById('new-sheet-modal'),
+                newSheetName: document.getElementById('new-sheet-name'),
+                newSheetPlayer: document.getElementById('new-sheet-player'),
+                createSheetBtn: document.getElementById('create-sheet-btn'),
+                cancelSheetBtn: document.getElementById('cancel-sheet-btn'),
+                
+                // Sheet elements
+                sheetView: document.getElementById('sheet-view'),
+                backBtn: document.getElementById('back-btn'),
+                characterName: document.getElementById('character-name'),
+                playerName: document.getElementById('player-name'),
+                deity: document.getElementById('deity'),
+                age: document.getElementById('age'),
+                etherLevel: document.getElementById('ether-level'),
+                potential: document.getElementById('potential'),
+                awakening: document.getElementById('awakening'),
+                armor: document.getElementById('armor'),
+                strength: document.getElementById('strength'),
+                dexterity: document.getElementById('dexterity'),
+                constitution: document.getElementById('constitution'),
+                intelligence: document.getElementById('intelligence'),
+                wisdom: document.getElementById('wisdom'),
+                charisma: document.getElementById('charisma'),
+                hpCurrent: document.getElementById('hp-current'),
+                hpMax: document.getElementById('hp-max'),
+                etherCurrent: document.getElementById('ether-current'),
+                etherMax: document.getElementById('ether-max'),
+                hpBar: document.getElementById('hp-bar'),
+                etherBar: document.getElementById('ether-bar'),
+                skillsContainer: document.getElementById('skills-container'),
+                abilitiesContainer: document.getElementById('abilities-container'),
+                weaponsBody: document.getElementById('weapons-body'),
+                inventoryContainer: document.getElementById('inventory-container'),
+                notes: document.getElementById('notes'),
+                addAbilityBtn: document.getElementById('add-ability-btn'),
+                addWeaponBtn: document.getElementById('add-weapon-btn'),
+                addItemBtn: document.getElementById('add-item-btn'),
+                damageInput: document.getElementById('damage-input'),
+                applyDamageBtn: document.getElementById('apply-damage-btn'),
+                realDamageInput: document.getElementById('real-damage-input'),
+                applyRealDamageBtn: document.getElementById('apply-real-damage-btn'),
+                etherCostInput: document.getElementById('ether-cost-input'),
+                applyEtherCostBtn: document.getElementById('apply-ether-cost-btn'),
+                addEtherBtn: document.getElementById('add-ether-btn'),
+                toggleEditBtn: document.getElementById('toggle-edit'),
+                column1: document.getElementById('column-1'),
+                column2: document.getElementById('column-2'),
+                
+                // Common elements
+                toast: document.getElementById('toast')
+            };
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyALPUrUbxV5WHjDLoev0iUTHYkj-EsaOX4",
-        authDomain: "era-do-eter.firebaseapp.com",
-        projectId: "era-do-eter",
-        storageBucket: "era-do-eter.firebasestorage.app",
-        messagingSenderId: "946835609657",
-        appId: "1:946835609657:web:80c89d5bc95cf1694755e8",
-        measurementId: "G-XRCPBXY5N4"
-    };
+            // Estado da aplicação
+            const state = {
+                sheets: [],
+                currentSheetId: null,
+                isMaster: true, // Agora todos são mestres por padrão
+                dragState: {
+                    isDragging: false,
+                    draggedPanel: null,
+                    draggedColumn: null,
+                    draggedIndex: -1,
+                    isEditMode: false,
+                    draggedItem: null,
+                    draggedAbility: null
+                },
+                refreshInterval: null
+            };
 
-    const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
-        
-    // Elementos do DOM
-    const elements = {
-        hubView: document.getElementById('hub-view'),
-        sheetsContainer: document.getElementById('sheets-container'),
-        newSheetBtn: document.getElementById('new-sheet-btn'),
-        refreshBtn: document.getElementById('refresh-btn'),
-        searchInput: document.getElementById('search-input'),
-        searchBtn: document.getElementById('search-btn'),
-        newSheetModal: document.getElementById('new-sheet-modal'),
-        newSheetName: document.getElementById('new-sheet-name'),
-        newSheetPlayer: document.getElementById('new-sheet-player'),
-        createSheetBtn: document.getElementById('create-sheet-btn'),
-        cancelSheetBtn: document.getElementById('cancel-sheet-btn'),
-        sheetView: document.getElementById('sheet-view'),
-        backBtn: document.getElementById('back-btn'),
-        characterName: document.getElementById('character-name'),
-        playerName: document.getElementById('player-name'),
-        deity: document.getElementById('deity'),
-        age: document.getElementById('age'),
-        etherLevel: document.getElementById('ether-level'),
-        potential: document.getElementById('potential'),
-        awakening: document.getElementById('awakening'),
-        armor: document.getElementById('armor'),
-        strength: document.getElementById('strength'),
-        dexterity: document.getElementById('dexterity'),
-        constitution: document.getElementById('constitution'),
-        intelligence: document.getElementById('intelligence'),
-        wisdom: document.getElementById('wisdom'),
-        charisma: document.getElementById('charisma'),
-        hpCurrent: document.getElementById('hp-current'),
-        hpMax: document.getElementById('hp-max'),
-        etherCurrent: document.getElementById('ether-current'),
-        etherMax: document.getElementById('ether-max'),
-        hpBar: document.getElementById('hp-bar'),
-        etherBar: document.getElementById('ether-bar'),
-        skillsContainer: document.getElementById('skills-container'),
-        abilitiesContainer: document.getElementById('abilities-container'),
-        weaponsBody: document.getElementById('weapons-body'),
-        inventoryContainer: document.getElementById('inventory-container'),
-        notes: document.getElementById('notes'),
-        addAbilityBtn: document.getElementById('add-ability-btn'),
-        addWeaponBtn: document.getElementById('add-weapon-btn'),
-        addItemBtn: document.getElementById('add-item-btn'),
-        damageInput: document.getElementById('damage-input'),
-        applyDamageBtn: document.getElementById('apply-damage-btn'),
-        realDamageInput: document.getElementById('real-damage-input'),
-        applyRealDamageBtn: document.getElementById('apply-real-damage-btn'),
-        etherCostInput: document.getElementById('ether-cost-input'),
-        applyEtherCostBtn: document.getElementById('apply-ether-cost-btn'),
-        addEtherBtn: document.getElementById('add-ether-btn'),
-        toggleEditBtn: document.getElementById('toggle-edit'),
-        column1: document.getElementById('column-1'),
-        column2: document.getElementById('column-2'),
-        toast: document.getElementById('toast'),
-        loginModal: document.getElementById('login-modal'),
-        loginEmail: document.getElementById('login-email'),
-        loginPassword: document.getElementById('login-password'),
-        loginBtn: document.getElementById('login-btn'),
-        registerBtn: document.getElementById('register-btn'),
-        loginError: document.getElementById('login-error')
-    };
+            // Lista de perícias padrão
+            const defaultSkills = [
+                'Atirar', 'Correr', 'Combate', 'Armas', 'Ciências', 'Tecnologia',
+                'Arcano', 'Procurar', 'Abrir Fechaduras', 'Reconhecer Armadilhas',
+                'Escalar Muros', 'Mover-se Em Silêncio', 'Esconder-se nas Sombras',
+                'Ouvir Barulhos', 'Ataque Pelas Costas', 'Presença'
+            ];
 
-    // Estado da aplicação
-    const state = {
-        sheets: [],
-        currentSheetId: null,
-        user: null,
-        isMaster: false,
-        refreshInterval: null
-    };
+            // Layout padrão dos painéis
+            const defaultPanels = {
+                'column-1': ['attributes', 'health', 'ether', 'skills'],
+                'column-2': ['abilities', 'weapons', 'notes', 'inventory']
+            };
 
-    // Lista de perícias padrão
-    const defaultSkills = [
-        'Atirar', 'Correr', 'Combate', 'Armas', 'Ciências', 'Tecnologia',
-        'Arcano', 'Procurar', 'Abrir Fechaduras', 'Reconhecer Armadilhas',
-        'Escalar Muros', 'Mover-se Em Silêncio', 'Esconder-se nas Sombras',
-        'Ouvir Barulhos', 'Ataque Pelas Costas', 'Presença'
-    ];
-
-    // Layout padrão dos painéis
-    const defaultPanels = {
-        'column-1': ['attributes', 'health', 'ether', 'skills'],
-        'column-2': ['abilities', 'weapons', 'notes', 'inventory']
-    };
-
-    // Inicializar a aplicação
-    function init() {
-        showLoginModal();
-        setupEventListeners();
-    }
-
-    // Mostrar modal de login
-    function showLoginModal() {
-        elements.loginModal.style.display = 'flex';
-        elements.hubView.style.display = 'none';
-        elements.sheetView.style.display = 'none';
-        elements.loginError.style.display = 'none';
-    }
-
-    // Login
-    elements.loginBtn.onclick = function() {
-        const email = elements.loginEmail.value.trim();
-        const password = elements.loginPassword.value.trim();
-        if (!email || !password) {
-            showLoginError('Preencha email e senha.');
-            return;
-        }
-        firebase.auth().signInWithEmailAndPassword(email, password)
-            .then(userCredential => {
-                state.user = userCredential.user;
-                elements.loginModal.style.display = 'none';
-                checkMaster();
+            // Inicializar a aplicação
+            function init() {
                 loadSheets();
                 showHub();
+                setupEventListeners();
                 startAutoRefresh();
-            })
-            .catch(err => showLoginError('Login falhou: ' + err.message));
-    };
-
-    // Registro
-    elements.registerBtn.onclick = function() {
-        const email = elements.loginEmail.value.trim();
-        const password = elements.loginPassword.value.trim();
-        if (!email || !password) {
-            showLoginError('Preencha email e senha.');
-            return;
-        }
-        firebase.auth().createUserWithEmailAndPassword(email, password)
-            .then(userCredential => {
-                state.user = userCredential.user;
-                elements.loginModal.style.display = 'none';
-                checkMaster();
-                loadSheets();
-                showHub();
-                startAutoRefresh();
-            })
-            .catch(err => showLoginError('Registro falhou: ' + err.message));
-    };
-
-    function showLoginError(msg) {
-        elements.loginError.textContent = msg;
-        elements.loginError.style.display = 'block';
-    }
-
-    // Checa se usuário é mestre (email termina com @mestre.com)
-    function checkMaster() {
-        state.isMaster = state.user.email.endsWith('@mestre.com');
-    }
-
-    // Atualização automática
-    function startAutoRefresh() {
-        if (state.refreshInterval) clearInterval(state.refreshInterval);
-        state.refreshInterval = setInterval(() => {
-            if (elements.hubView.style.display === 'block') loadSheets();
-        }, 5000);
-    }
-
-    // Carregar fichas do Firebase
-    function loadSheets() {
-        firebase.database().ref('sheets').once('value').then(snapshot => {
-            const sheetsObj = snapshot.val() || {};
-            state.sheets = Object.values(sheetsObj);
-            renderSheets(elements.searchInput.value.trim());
-        });
-    }
-
-    // Salvar fichas no Firebase
-    function saveSheets() {
-        const sheetsObj = {};
-        state.sheets.forEach(sheet => sheetsObj[sheet.id] = sheet);
-        firebase.database().ref('sheets').set(sheetsObj);
-    }
-
-    // Renderizar fichas no hub
-    function renderSheets(filter = '') {
-        elements.sheetsContainer.innerHTML = '';
-        let sheetsToRender = state.sheets;
-
-        // Jogador só vê sua ficha
-        if (!state.isMaster) {
-            sheetsToRender = sheetsToRender.filter(sheet => sheet.userId === state.user.uid);
-        }
-
-        // Filtro
-        if (filter) {
-            const searchTerm = filter.toLowerCase();
-            sheetsToRender = sheetsToRender.filter(sheet =>
-                (sheet.characterName || '').toLowerCase().includes(searchTerm) ||
-                (sheet.playerName || '').toLowerCase().includes(searchTerm)
-            );
-        }
-
-        sheetsToRender.sort((a, b) => (a.characterName || '').localeCompare(b.characterName || ''));
-
-        if (sheetsToRender.length === 0) {
-            elements.sheetsContainer.innerHTML = `
-                <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-secondary)">
-                    Nenhuma ficha encontrada.
-                </div>
-            `;
-            return;
-        }
-
-        sheetsToRender.forEach(sheet => {
-            const hpPercent = sheet.hpMax > 0 ? Math.min(100, (sheet.hpCurrent / sheet.hpMax * 100)).toFixed(1) : 0;
-            const etherPercent = sheet.etherMax > 0 ? Math.min(100, (sheet.etherCurrent / sheet.etherMax * 100)).toFixed(1) : 0;
-            const sheetCard = document.createElement('div');
-            sheetCard.className = 'sheet-card';
-            sheetCard.dataset.sheetId = sheet.id;
-            sheetCard.innerHTML = `
-                <div class="sheet-header">
-                    <h3 class="sheet-title">
-                        ${sheet.characterName || 'Sem nome'}
-                        <span class="sheet-player">${sheet.playerName ? `(${sheet.playerName})` : ''}</span>
-                    </h3>
-                </div>
-                <div class="sheet-resources">
-                    <div class="resource">
-                        <div class="resource-label">
-                            <span>Vida</span>
-                            <span>${sheet.hpCurrent || '0'}/${sheet.hpMax || '0'}</span>
-                        </div>
-                        <div class="progress-container">
-                            <div class="progress-bar" style="width: ${hpPercent}%">${hpPercent}%</div>
-                        </div>
-                    </div>
-                    <div class="resource">
-                        <div class="resource-label">
-                            <span>Éter</span>
-                            <span>${sheet.etherCurrent || '0'}/${sheet.etherMax || '0'}</span>
-                        </div>
-                        <div class="progress-container">
-                            <div class="progress-bar" style="width: ${etherPercent}%">${etherPercent}%</div>
-                        </div>
-                    </div>
-                </div>
-                <button class="update-all-btn" data-action="edit">Editar Ficha</button>
-                ${state.isMaster ? `
-                <div class="sheet-actions">
-                    <button class="sheet-btn delete-btn" data-action="delete">Excluir</button>
-                </div>
-                ` : ''}
-            `;
-            elements.sheetsContainer.appendChild(sheetCard);
-        });
-    }
-
-    // Criar nova ficha
-    function createNewSheet() {
-        const characterName = elements.newSheetName.value.trim();
-        const playerName = elements.newSheetPlayer.value.trim();
-        if (!characterName) {
-            showToast('Por favor, insira um nome para o personagem');
-            return;
-        }
-        const newSheet = {
-            id: Date.now().toString(),
-            userId: state.user.uid,
-            characterName,
-            playerName,
-            deity: '',
-            age: '',
-            etherLevel: '1',
-            potential: '',
-            awakening: '',
-            armor: '0',
-            strength: '0',
-            dexterity: '0',
-            constitution: '0',
-            intelligence: '0',
-            wisdom: '0',
-            charisma: '0',
-            hpCurrent: '10',
-            hpMax: '10',
-            etherCurrent: '5',
-            etherMax: '5',
-            skills: {},
-            abilities: [],
-            weapons: [],
-            inventory: [],
-            notes: '',
-            panelLayout: defaultPanels,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
-        defaultSkills.forEach(skill => {
-            const skillId = `skill-${skill.toLowerCase().replace(/\s+/g, '-')}`;
-            newSheet.skills[skillId] = '';
-        });
-        newSheet.abilities.push({
-            name: 'Nova Habilidade',
-            ether: '0',
-            grade: '1',
-            description: 'Descrição da habilidade...',
-            type: 'Passiva',
-            duration: 'Duração',
-            range: 'Alcance',
-            collapsed: false
-        });
-        newSheet.weapons.push({
-            name: 'Nova Arma',
-            act: '',
-            damage: '',
-            range: '',
-            size: ''
-        });
-        newSheet.inventory.push({
-            quantity: '1',
-            name: 'Novo Item',
-            description: '',
-            carrying: true,
-            collapsed: false
-        });
-        state.sheets.push(newSheet);
-        saveSheets();
-        closeModal(elements.newSheetModal);
-        renderSheets();
-        openSheet(newSheet.id);
-    }
-
-    // Abrir ficha
-    function openSheet(sheetId) {
-        const sheet = state.sheets.find(s => s.id === sheetId);
-        if (!sheet) {
-            showToast('Ficha não encontrada');
-            showHub();
-            return;
-        }
-        // Jogador só pode abrir sua ficha
-        if (!state.isMaster && sheet.userId !== state.user.uid) {
-            showToast('Você não tem permissão para acessar esta ficha');
-            return;
-        }
-        state.currentSheetId = sheetId;
-        loadSheetData(sheet);
-        showSheet();
-    }
-
-    // Carregar dados da ficha (igual ao seu código atual, só removendo localStorage)
-    function loadSheetData(sheet) {
-        elements.characterName.value = sheet.characterName || '';
-        elements.playerName.value = sheet.playerName || '';
-        elements.deity.value = sheet.deity || '';
-        elements.age.value = sheet.age || '';
-        elements.etherLevel.value = sheet.etherLevel || '';
-        elements.potential.value = sheet.potential || '';
-        elements.awakening.value = sheet.awakening || '';
-        elements.armor.value = sheet.armor || '0';
-        elements.strength.value = sheet.strength || '0';
-        elements.dexterity.value = sheet.dexterity || '0';
-        elements.constitution.value = sheet.constitution || '0';
-        elements.intelligence.value = sheet.intelligence || '0';
-        elements.wisdom.value = sheet.wisdom || '0';
-        elements.charisma.value = sheet.charisma || '0';
-        elements.hpCurrent.value = sheet.hpCurrent || '0';
-        elements.hpMax.value = sheet.hpMax || '0';
-        elements.etherCurrent.value = sheet.etherCurrent || '0';
-        elements.etherMax.value = sheet.etherMax || '0';
-        elements.notes.value = sheet.notes || '';
-
-        // Limpar e adicionar perícias
-        createSkills(sheet.skills);
-
-        // Limpar e adicionar habilidades
-        elements.abilitiesContainer.innerHTML = '';
-        if (sheet.abilities && sheet.abilities.length > 0) {
-            sheet.abilities.forEach(ability => {
-                addAbility(
-                    ability.name, 
-                    ability.ether, 
-                    ability.grade, 
-                    ability.description, 
-                    ability.type, 
-                    ability.duration, 
-                    ability.range, 
-                    ability.collapsed
-                );
-            });
-        } else {
-            addDefaultAbility();
-        }
-        
-        // Limpar e adicionar armas
-        elements.weaponsBody.innerHTML = '';
-        if (sheet.weapons && sheet.weapons.length > 0) {
-            sheet.weapons.forEach(weapon => {
-                addWeapon(weapon.name, weapon.act, weapon.damage, weapon.range, weapon.size);
-            });
-        } else {
-            addDefaultWeapon();
-        }
-        
-        // Limpar e adicionar itens
-        elements.inventoryContainer.innerHTML = '';
-        if (sheet.inventory && sheet.inventory.length > 0) {
-            sheet.inventory.forEach(item => {
-                addItem(item.quantity, item.name, item.description, item.carrying, item.collapsed);
-            });
-        } else {
-            addDefaultItem();
-        }
-        
-        // Restaurar layout dos painéis
-        if (sheet.panelLayout) {
-            restorePanelLayout(sheet.panelLayout);
-        } else {
-            restorePanelLayout(defaultPanels);
-        }
-        
-        // Atualizar cálculos
-        updateCalculations();
-        
-        // Configurar modo de visualização para jogadores
-        if (!state.isMaster) {
-            document.querySelectorAll('.editable').forEach(el => {
-                el.readOnly = false; // Permitir edição para o jogador
-            });
-            
-            // Mostrar apenas botões relevantes para o jogador
-            document.querySelectorAll('.action-btn').forEach(btn => {
-                if (btn.id === 'back-btn' || btn.id === 'toggle-edit' || 
-                    btn.id === 'apply-damage-btn' || btn.id === 'apply-real-damage-btn' || 
-                    btn.id === 'apply-ether-cost-btn' || btn.id === 'add-ether-btn') {
-                    btn.style.display = 'inline-flex';
-                } else {
-                    btn.style.display = 'none';
-                }
-            });
-            
-            // Esconder botões de deletar
-            document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.style.display = 'none';
-            });
-        }
-    }
-
-    // Restaurar layout dos painéis
-    function restorePanelLayout(panelLayout) {
-        // Criar mapa de todos os painéis existentes
-        const allPanels = {};
-        document.querySelectorAll('.panel').forEach(panel => {
-            allPanels[panel.dataset.panelId] = panel;
-        });
-        
-        // Limpar colunas
-        elements.column1.innerHTML = '';
-        elements.column2.innerHTML = '';
-        
-        // Função para restaurar uma coluna
-        const restoreColumn = (columnId, panelIds) => {
-            const column = columnId === 'column-1' ? elements.column1 : elements.column2;
-            
-            panelIds.forEach(panelId => {
-                if (allPanels[panelId]) {
-                    column.appendChild(allPanels[panelId]);
-                    delete allPanels[panelId];
-                }
-            });
-        };
-        
-        // Restaurar colunas conforme o layout
-        if (panelLayout['column-1']) {
-            restoreColumn('column-1', panelLayout['column-1']);
-        }
-        
-        if (panelLayout['column-2']) {
-            restoreColumn('column-2', panelLayout['column-2']);
-        }
-        
-        // Adicionar quaisquer painéis restantes na coluna 1 (fallback)
-        for (const panelId in allPanels) {
-            if (allPanels[panelId]) {
-                elements.column1.appendChild(allPanels[panelId]);
             }
-        }
-    }
 
-    // Criar perícias
-    function createSkills(skillsData = {}) {
-        elements.skillsContainer.innerHTML = '';
-        defaultSkills.forEach(skill => {
-            const skillId = `skill-${skill.toLowerCase().replace(/\s+/g, '-')}`;
-            const skillValue = skillsData[skillId] || '';
-            
-            const skillItem = document.createElement('div');
-            skillItem.className = 'skill-item';
-            skillItem.innerHTML = `
-                <div class="skill-name">${skill}</div>
-                <input type="text" class="skill-value editable" id="${skillId}" value="${skillValue}" ${!state.isMaster ? '' : ''}>
-            `;
-            elements.skillsContainer.appendChild(skillItem);
-        });
-    }
+            // Iniciar atualização automática
+            function startAutoRefresh() {
+                if (state.refreshInterval) {
+                    clearInterval(state.refreshInterval);
+                }
+                state.refreshInterval = setInterval(() => {
+                    if (elements.hubView.style.display === 'block') {
+                        loadSheets();
+                    }
+                }, 5000); // Atualiza a cada 5 segundos
+            }
 
-    // Adicionar habilidade padrão
-    function addDefaultAbility() {
-        if (document.querySelectorAll('.ability-item').length === 0) {
-            addAbility('Nova Habilidade', '0', '1', 'Descrição da habilidade...', 'Passiva', 'Duração', 'Alcance');
-        }
-    }
+            // Carregar fichas do armazenamento local
+            function loadSheets() {
+                const savedSheets = localStorage.getItem('rpgSheets');
+                if (savedSheets) {
+                    try {
+                        state.sheets = JSON.parse(savedSheets);
+                        renderSheets();
+                    } catch (e) {
+                        console.error("Erro ao carregar fichas:", e);
+                    }
+                }
+            }
 
-    // Adicionar habilidade/arcana
-    function addAbility(name, ether, grade, description, type, duration, range, collapsed = false) {
-        const abilityItem = document.createElement('div');
-        abilityItem.className = `ability-item ${collapsed ? 'collapsed' : ''}`;
-        abilityItem.draggable = state.isMaster;
-        abilityItem.innerHTML = `
-            <div class="ability-header">
-                <div class="ability-name">
-                    <span class="ability-toggle">${collapsed ? '+' : '-'}</span>
-                    <input type="text" class="editable ability-name-input" value="${name}" placeholder="Nome da Habilidade" ${!state.isMaster ? '' : ''}>
-                </div>
-                <div class="ability-cost">
-                    <span>Éter:</span>
-                    <input type="text" class="ability-ether editable" value="${ether}" ${!state.isMaster ? '' : ''}>
-                    <span>Grau:</span>
-                    <input type="text" class="ability-grade editable" value="${grade}" ${!state.isMaster ? '' : ''}>
-                    <button class="ability-use-btn use-ability">Usar</button>
-                    ${state.isMaster ? '<button class="delete-btn delete-ability">×</button>' : ''}
-                </div>
-            </div>
-            <textarea class="ability-desc editable" ${!state.isMaster ? '' : ''}>${description}</textarea>
-            <div class="ability-meta">
-                <select class="ability-type" ${!state.isMaster ? '' : ''}>
-                    <option value="Passiva" ${type === 'Passiva' ? 'selected' : ''}>Passiva</option>
-                    <option value="Ativa" ${type === 'Ativa' ? 'selected' : ''}>Ativa</option>
-                </select>
-                <input type="text" class="ability-duration" value="${duration}" placeholder="Duração" ${!state.isMaster ? '' : ''}>
-                <input type="text" class="ability-range" value="${range}" placeholder="Alcance" ${!state.isMaster ? '' : ''}>
-                <span class="ability-extra" id="ability-extra-${Date.now()}"></span>
-            </div>
-        `;
-        elements.abilitiesContainer.appendChild(abilityItem);
-        
-        // Adicionar evento para o botão de deletar (apenas para mestre)
-        if (state.isMaster) {
-            const deleteBtn = abilityItem.querySelector('.delete-ability');
-            if (deleteBtn) {
-                deleteBtn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    if (confirm('Tem certeza que deseja remover esta habilidade?')) {
-                        abilityItem.remove();
+            // Renderizar fichas na tela
+            function renderSheets(filter = '') {
+                elements.sheetsContainer.innerHTML = '';
+                
+                let sheetsToRender = state.sheets;
+                
+                // Aplicar filtro se houver
+                if (filter) {
+                    const searchTerm = filter.toLowerCase();
+                    sheetsToRender = sheetsToRender.filter(sheet => 
+                        sheet.characterName.toLowerCase().includes(searchTerm) || 
+                        sheet.playerName.toLowerCase().includes(searchTerm)
+                    );
+                }
+                
+                // Ordenar por nome do personagem
+                sheetsToRender.sort((a, b) => a.characterName.localeCompare(b.characterName));
+                
+                if (sheetsToRender.length === 0) {
+                    elements.sheetsContainer.innerHTML = `
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-secondary)">
+                            Nenhuma ficha encontrada. Clique em "Nova Ficha" para começar.
+                        </div>
+                    `;
+                    return;
+                }
+                
+                sheetsToRender.forEach(sheet => {
+                    const hpPercent = sheet.hpMax > 0 ? Math.min(100, (sheet.hpCurrent / sheet.hpMax * 100)).toFixed(1) : 0;
+                    const etherPercent = sheet.etherMax > 0 ? Math.min(100, (sheet.etherCurrent / sheet.etherMax * 100)).toFixed(1) : 0;
+                    
+                    const sheetCard = document.createElement('div');
+                    sheetCard.className = 'sheet-card';
+                    sheetCard.dataset.sheetId = sheet.id;
+                    sheetCard.innerHTML = `
+                        <div class="sheet-header">
+                            <h3 class="sheet-title">
+                                ${sheet.characterName || 'Sem nome'}
+                                <span class="sheet-player">${sheet.playerName ? `(${sheet.playerName})` : ''}</span>
+                            </h3>
+                        </div>
+                        <div class="sheet-resources">
+                            <div class="resource">
+                                <div class="resource-label">
+                                    <span>Vida</span>
+                                    <span>${sheet.hpCurrent || '0'}/${sheet.hpMax || '0'}</span>
+                                </div>
+                                <div class="progress-container">
+                                    <div class="progress-bar" style="width: ${hpPercent}%">${hpPercent}%</div>
+                                </div>
+                                <div class="resource-controls">
+                                    <input type="number" class="hp-current-input" value="${sheet.hpCurrent || '0'}" min="0" max="${sheet.hpMax || '0'}">
+                                    <span>/</span>
+                                    <input type="number" class="hp-max-input" value="${sheet.hpMax || '0'}" min="0">
+                                </div>
+                            </div>
+                            <div class="resource">
+                                <div class="resource-label">
+                                    <span>Éter</span>
+                                    <span>${sheet.etherCurrent || '0'}/${sheet.etherMax || '0'}</span>
+                                </div>
+                                <div class="progress-container">
+                                    <div class="progress-bar" style="width: ${etherPercent}%">${etherPercent}%</div>
+                                </div>
+                                <div class="resource-controls">
+                                    <input type="number" class="ether-current-input" value="${sheet.etherCurrent || '0'}" min="0" max="${sheet.etherMax || '0'}">
+                                    <span>/</span>
+                                    <input type="number" class="ether-max-input" value="${sheet.etherMax || '0'}" min="0">
+                                </div>
+                            </div>
+                        </div>
+                        <button class="update-all-btn" data-action="update-all">Atualizar Valores</button>
+                        <div class="sheet-actions">
+                            <button class="sheet-btn edit-btn" data-action="edit">Editar</button>
+                            <button class="sheet-btn delete-btn" data-action="delete">Excluir</button>
+                        </div>
+                    `;
+                    
+                    elements.sheetsContainer.appendChild(sheetCard);
+                    
+                    // Adicionar evento para atualizar HP e Éter
+                    const hpCurrentInput = sheetCard.querySelector('.hp-current-input');
+                    const hpMaxInput = sheetCard.querySelector('.hp-max-input');
+                    const etherCurrentInput = sheetCard.querySelector('.ether-current-input');
+                    const etherMaxInput = sheetCard.querySelector('.ether-max-input');
+                    const updateAllBtn = sheetCard.querySelector('.update-all-btn');
+                    
+                    updateAllBtn.addEventListener('click', () => {
+                        updateResource(sheet.id, 'hpCurrent', hpCurrentInput.value, 'hpMax', hpMaxInput.value);
+                        updateResource(sheet.id, 'etherCurrent', etherCurrentInput.value, 'etherMax', etherMaxInput.value);
+                    });
+                    
+                    // Permitir atualizar com Enter
+                    [hpCurrentInput, hpMaxInput, etherCurrentInput, etherMaxInput].forEach(input => {
+                        input.addEventListener('keypress', (e) => {
+                            if (e.key === 'Enter') {
+                                updateResource(sheet.id, 'hpCurrent', hpCurrentInput.value, 'hpMax', hpMaxInput.value);
+                                updateResource(sheet.id, 'etherCurrent', etherCurrentInput.value, 'etherMax', etherMaxInput.value);
+                            }
+                        });
+                    });
+                });
+            }
+
+            // Atualizar recurso (HP ou Éter)
+            function updateResource(sheetId, currentKey, currentValue, maxKey, maxValue) {
+                const sheet = state.sheets.find(s => s.id === sheetId);
+                if (!sheet) return;
+                
+                // Validar valores
+                const newCurrent = Math.max(0, parseInt(currentValue) || 0);
+                const newMax = Math.max(0, parseInt(maxValue) || 0);
+                const adjustedCurrent = Math.min(newCurrent, newMax);
+                
+                // Atualizar ficha
+                sheet[currentKey] = adjustedCurrent.toString();
+                sheet[maxKey] = newMax.toString();
+                sheet.updatedAt = new Date().toISOString();
+                
+                saveSheets();
+                renderSheets(elements.searchInput.value.trim());
+                showToast('Valores atualizados com sucesso!');
+            }
+
+            // Criar uma nova ficha
+            function createNewSheet() {
+                const characterName = elements.newSheetName.value.trim();
+                const playerName = elements.newSheetPlayer.value.trim();
+                
+                if (!characterName) {
+                    showToast('Por favor, insira um nome para o personagem');
+                    return;
+                }
+                
+                const newSheet = {
+                    id: Date.now().toString(),
+                    characterName,
+                    playerName,
+                    deity: '',
+                    age: '',
+                    etherLevel: '1',
+                    potential: '',
+                    awakening: '',
+                    armor: '0',
+                    strength: '0',
+                    dexterity: '0',
+                    constitution: '0',
+                    intelligence: '0',
+                    wisdom: '0',
+                    charisma: '0',
+                    hpCurrent: '10',
+                    hpMax: '10',
+                    etherCurrent: '5',
+                    etherMax: '5',
+                    skills: {},
+                    abilities: [],
+                    weapons: [],
+                    inventory: [],
+                    notes: '',
+                    panelLayout: defaultPanels,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+                
+                // Adicionar perícias padrão
+                defaultSkills.forEach(skill => {
+                    const skillId = `skill-${skill.toLowerCase().replace(/\s+/g, '-')}`;
+                    newSheet.skills[skillId] = '';
+                });
+                
+                // Adicionar uma habilidade padrão
+                newSheet.abilities.push({
+                    name: 'Nova Habilidade',
+                    ether: '0',
+                    grade: '1',
+                    description: 'Descrição da habilidade...',
+                    type: 'Passiva',
+                    duration: 'Duração',
+                    range: 'Alcance',
+                    collapsed: false
+                });
+                
+                // Adicionar uma arma padrão
+                newSheet.weapons.push({
+                    name: 'Nova Arma',
+                    act: '',
+                    damage: '',
+                    range: '',
+                    size: ''
+                });
+                
+                // Adicionar um item padrão
+                newSheet.inventory.push({
+                    quantity: '1',
+                    name: 'Novo Item',
+                    description: '',
+                    carrying: true,
+                    collapsed: false
+                });
+                
+                state.sheets.push(newSheet);
+                saveSheets();
+                closeModal(elements.newSheetModal);
+                renderSheets();
+                
+                // Abrir a ficha recém-criada
+                openSheet(newSheet.id);
+            }
+
+            // Abrir ficha para edição/visualização
+            function openSheet(sheetId) {
+                const sheet = state.sheets.find(s => s.id === sheetId);
+                if (!sheet) {
+                    showToast('Ficha não encontrada');
+                    showHub();
+                    return;
+                }
+                
+                state.currentSheetId = sheetId;
+                loadSheetData(sheet);
+                showSheet();
+            }
+
+            // Carregar dados da ficha
+            function loadSheetData(sheet) {
+                // Preencher campos básicos
+                elements.characterName.value = sheet.characterName || '';
+                elements.playerName.value = sheet.playerName || '';
+                elements.deity.value = sheet.deity || '';
+                elements.age.value = sheet.age || '';
+                elements.etherLevel.value = sheet.etherLevel || '';
+                elements.potential.value = sheet.potential || '';
+                elements.awakening.value = sheet.awakening || '';
+                elements.armor.value = sheet.armor || '0';
+                elements.strength.value = sheet.strength || '0';
+                elements.dexterity.value = sheet.dexterity || '0';
+                elements.constitution.value = sheet.constitution || '0';
+                elements.intelligence.value = sheet.intelligence || '0';
+                elements.wisdom.value = sheet.wisdom || '0';
+                elements.charisma.value = sheet.charisma || '0';
+                elements.hpCurrent.value = sheet.hpCurrent || '0';
+                elements.hpMax.value = sheet.hpMax || '0';
+                elements.etherCurrent.value = sheet.etherCurrent || '0';
+                elements.etherMax.value = sheet.etherMax || '0';
+                elements.notes.value = sheet.notes || '';
+                
+                // Criar perícias
+                createSkills(sheet.skills);
+                
+                // Limpar e adicionar habilidades
+                elements.abilitiesContainer.innerHTML = '';
+                if (sheet.abilities && sheet.abilities.length > 0) {
+                    sheet.abilities.forEach(ability => {
+                        addAbility(
+                            ability.name || 'Nova Habilidade',
+                            ability.ether, 
+                            ability.grade, 
+                            ability.description, 
+                            ability.type, 
+                            ability.duration, 
+                            ability.range, 
+                            ability.collapsed
+                        );
+                    });
+                } else {
+                    addDefaultAbility();
+                }
+                
+                // Limpar e adicionar armas
+                elements.weaponsBody.innerHTML = '';
+                if (sheet.weapons && sheet.weapons.length > 0) {
+                    sheet.weapons.forEach(weapon => {
+                        addWeapon(weapon.name, weapon.act, weapon.damage, weapon.range, weapon.size);
+                    });
+                } else {
+                    addDefaultWeapon();
+                }
+                
+                // Limpar e adicionar itens
+                elements.inventoryContainer.innerHTML = '';
+                if (sheet.inventory && sheet.inventory.length > 0) {
+                    sheet.inventory.forEach(item => {
+                        addItem(item.quantity, item.name, item.description, item.carrying, item.collapsed);
+                    });
+                } else {
+                    addDefaultItem();
+                }
+                
+                // Restaurar layout dos painéis
+                if (sheet.panelLayout) {
+                    restorePanelLayout(sheet.panelLayout);
+                } else {
+                    restorePanelLayout(defaultPanels);
+                }
+                
+                // Atualizar cálculos
+                updateCalculations();
+            }
+
+            // Restaurar layout dos painéis
+            function restorePanelLayout(panelLayout) {
+                // Criar mapa de todos os painéis existentes
+                const allPanels = {};
+                document.querySelectorAll('.panel').forEach(panel => {
+                    allPanels[panel.dataset.panelId] = panel;
+                });
+                
+                // Limpar colunas
+                elements.column1.innerHTML = '';
+                elements.column2.innerHTML = '';
+                
+                // Função para restaurar uma coluna
+                const restoreColumn = (columnId, panelIds) => {
+                    const column = columnId === 'column-1' ? elements.column1 : elements.column2;
+                    
+                    panelIds.forEach(panelId => {
+                        if (allPanels[panelId]) {
+                            column.appendChild(allPanels[panelId]);
+                            delete allPanels[panelId];
+                        }
+                    });
+                };
+                
+                // Restaurar colunas conforme o layout
+                if (panelLayout['column-1']) {
+                    restoreColumn('column-1', panelLayout['column-1']);
+                }
+                
+                if (panelLayout['column-2']) {
+                    restoreColumn('column-2', panelLayout['column-2']);
+                }
+                
+                // Adicionar quaisquer painéis restantes na coluna 1 (fallback)
+                for (const panelId in allPanels) {
+                    if (allPanels[panelId]) {
+                        elements.column1.appendChild(allPanels[panelId]);
+                    }
+                }
+            }
+
+            // Criar perícias
+            function createSkills(skillsData = {}) {
+                elements.skillsContainer.innerHTML = '';
+                defaultSkills.forEach(skill => {
+                    const skillId = `skill-${skill.toLowerCase().replace(/\s+/g, '-')}`;
+                    const skillValue = skillsData[skillId] || '';
+                    
+                    const skillItem = document.createElement('div');
+                    skillItem.className = 'skill-item';
+                    skillItem.innerHTML = `
+                        <div class="skill-name">${skill}</div>
+                        <input type="text" class="skill-value editable" id="${skillId}" value="${skillValue}">
+                    `;
+                    elements.skillsContainer.appendChild(skillItem);
+                });
+            }
+
+            // Adicionar habilidade padrão
+            function addDefaultAbility() {
+                if (document.querySelectorAll('.ability-item').length === 0) {
+                    addAbility('Nova Habilidade', '0', '1', 'Descrição da habilidade...', 'Passiva', 'Duração', 'Alcance');
+                }
+            }
+
+            // Adicionar habilidade/arcana
+            function addAbility(name, ether, grade, description, type, duration, range, collapsed = false) {
+                const abilityItem = document.createElement('div');
+                abilityItem.className = `ability-item ${collapsed ? 'collapsed' : ''}`;
+                abilityItem.draggable = true;
+                abilityItem.innerHTML = `
+                    <div class="ability-header">
+                        <div class="ability-name">
+                            <span class="ability-toggle">${collapsed ? '+' : '-'}</span>
+                            <input type="text" class="editable ability-name-input" value="${name}" placeholder="Nome da Habilidade">
+                        </div>
+                        <div class="ability-cost">
+                            <span>Éter:</span>
+                            <input type="text" class="ability-ether editable" value="${ether}">
+                            <span>Grau:</span>
+                            <input type="text" class="ability-grade editable" value="${grade}">
+                            <button class="ability-use-btn use-ability">Usar</button>
+                            <button class="delete-btn delete-ability">×</button>
+                        </div>
+                    </div>
+                    <textarea class="ability-desc editable">${description}</textarea>
+                    <div class="ability-meta">
+                        <select class="ability-type">
+                            <option value="Passiva" ${type === 'Passiva' ? 'selected' : ''}>Passiva</option>
+                            <option value="Ativa" ${type === 'Ativa' ? 'selected' : ''}>Ativa</option>
+                        </select>
+                        <input type="text" class="ability-duration" value="${duration}" placeholder="Duração">
+                        <input type="text" class="ability-range" value="${range}" placeholder="Alcance">
+                        <span class="ability-extra" id="ability-extra-${Date.now()}"></span>
+                    </div>
+                `;
+                elements.abilitiesContainer.appendChild(abilityItem);
+                
+                // Adicionar evento para o botão de deletar
+                const deleteBtn = abilityItem.querySelector('.delete-ability');
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        if (confirm('Tem certeza que deseja remover esta habilidade?')) {
+                            abilityItem.remove();
+                            saveCurrentSheet();
+                        }
+                    });
+                }
+                
+                // Adicionar evento para o botão de usar
+                abilityItem.querySelector('.use-ability').addEventListener('click', function() {
+                    useAbility(abilityItem);
+                });
+                
+                function adjustTextareaHeight(textarea) {
+                    textarea.style.height = 'auto';
+                    textarea.style.height = (textarea.scrollHeight + 20) + 'px';
+                }
+
+                // Adicionar evento para o botão de recolher/expandir
+                const toggleBtn = abilityItem.querySelector('.ability-toggle');
+                abilityItem.addEventListener('click', function(e) {
+                    if (e.target.classList.contains('ability-toggle') || e.target.closest('.ability-name')) {
+                        abilityItem.classList.toggle('collapsed');
+                        toggleBtn.textContent = abilityItem.classList.contains('collapsed') ? '+' : '-';
+                        
+                        // Ajustar altura da textarea quando expandir
+                        if (!abilityItem.classList.contains('collapsed')) {
+                            const textarea = abilityItem.querySelector('.ability-desc');
+                            setTimeout(() => {
+                                adjustTextareaHeight(textarea);
+                            }, 10); // Pequeno atraso para garantir que a transição tenha terminado
+                        }
+                        
                         saveCurrentSheet();
                     }
                 });
-            }
-        }
-        
-        // Adicionar evento para o botão de usar
-        abilityItem.querySelector('.use-ability').addEventListener('click', function() {
-            useAbility(abilityItem);
-        });
-        
-        function adjustTextareaHeight(textarea) {
-            textarea.style.height = 'auto';
-            textarea.style.height = (textarea.scrollHeight + 20) + 'px';
-        }
-
-        // Adicionar evento para o botão de recolher/expandir
-        const toggleBtn = abilityItem.querySelector('.ability-toggle');
-        abilityItem.addEventListener('click', function(e) {
-            if (e.target.classList.contains('ability-toggle') || e.target.closest('.ability-name')) {
-                abilityItem.classList.toggle('collapsed');
-                toggleBtn.textContent = abilityItem.classList.contains('collapsed') ? '+' : '-';
                 
-                // Ajustar altura da textarea quando expandir
-                if (!abilityItem.classList.contains('collapsed')) {
+                // Ajustar altura da textarea
+                setTimeout(() => {
                     const textarea = abilityItem.querySelector('.ability-desc');
+                    adjustTextareaHeight(textarea);
+                }, 0);
+                
+                // Atualizar cálculo de éter com presença
+                updateAbilityEtherCost(abilityItem);
+                
+                // Atualizar quando o valor de éter for alterado
+                abilityItem.querySelector('.ability-ether').addEventListener('input', function() {
+                    updateAbilityEtherCost(abilityItem);
+                    saveCurrentSheet();
+                });
+
+                // Configurar arrastar e soltar para a habilidade
+                setupAbilityDragAndDrop(abilityItem);
+            }
+
+            // Configurar arrastar e soltar para habilidades
+            function setupAbilityDragAndDrop(abilityItem) {
+                abilityItem.addEventListener('dragstart', function(e) {
+                    state.dragState.draggedAbility = abilityItem;
                     setTimeout(() => {
-                        adjustTextareaHeight(textarea);
-                    }, 10); // Pequeno atraso para garantir que a transição tenha terminado
+                        abilityItem.classList.add('dragging');
+                    }, 0);
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+
+                abilityItem.addEventListener('dragend', function() {
+                    abilityItem.classList.remove('dragging');
+                    state.dragState.draggedAbility = null;
+                    saveCurrentSheet();
+                });
+            }
+
+            // Configurar zona de soltar para habilidades
+            function setupAbilitiesDropZone() {
+                elements.abilitiesContainer.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    
+                    const afterElement = getDragAfterAbility(e.clientY);
+                    const draggingAbility = state.dragState.draggedAbility;
+                    
+                    if (afterElement == null) {
+                        elements.abilitiesContainer.appendChild(draggingAbility);
+                    } else {
+                        elements.abilitiesContainer.insertBefore(draggingAbility, afterElement);
+                    }
+                });
+            }
+
+            // Obter elemento após o qual a habilidade será inserida
+            function getDragAfterAbility(y) {
+                const abilities = [...elements.abilitiesContainer.querySelectorAll('.ability-item:not(.dragging)')];
+                
+                return abilities.reduce((closest, child) => {
+                    const box = child.getBoundingClientRect();
+                    const offset = y - box.top - box.height / 2;
+                    
+                    if (offset < 0 && offset > closest.offset) {
+                        return { offset: offset, element: child };
+                    } else {
+                        return closest;
+                    }
+                }, { offset: Number.NEGATIVE_INFINITY }).element;
+            }
+
+            // Atualizar custo de éter considerando presença
+            function updateAbilityEtherCost(abilityItem) {
+                const presenceSkill = document.getElementById('skill-presença');
+                const etherInput = abilityItem.querySelector('.ability-ether');
+                const extraSpan = abilityItem.querySelector('.ability-extra');
+                
+                if (presenceSkill && presenceSkill.value && parseInt(presenceSkill.value) > 100) {
+                    const presence = parseInt(presenceSkill.value);
+                    const etherCost = parseInt(etherInput.value) || 0;
+                    const calculatedCost = Math.floor(etherCost * (presence / 100));
+                    
+                    extraSpan.textContent = `Custo real: ${calculatedCost}`;
+                } else {
+                    extraSpan.textContent = '';
+                }
+            }
+
+            // Usar habilidade/arcana
+            function useAbility(abilityItem) {
+                const presenceSkill = document.getElementById('skill-presença');
+                const etherInput = abilityItem.querySelector('.ability-ether');
+                const currentEther = parseInt(elements.etherCurrent.value) || 0;
+                
+                let etherCost = parseInt(etherInput.value) || 0;
+                
+                // Calcular custo considerando presença
+                if (presenceSkill && presenceSkill.value && parseInt(presenceSkill.value) > 100) {
+                    const presence = parseInt(presenceSkill.value);
+                    etherCost = Math.floor(etherCost * (presence / 100));
                 }
                 
+                if (etherCost > currentEther) {
+                    alert('Éter insuficiente para usar esta habilidade!');
+                    return;
+                }
+                
+                // Reduzir éter
+                const newEther = Math.max(0, currentEther - etherCost);
+                elements.etherCurrent.value = newEther;
+                updateProgressBars();
                 saveCurrentSheet();
+                
+                alert(`Habilidade usada! ${etherCost} de éter consumido.`);
             }
-        });
-        
-        // Ajustar altura da textarea
-        setTimeout(() => {
-            const textarea = abilityItem.querySelector('.ability-desc');
-            adjustTextareaHeight(textarea);
-        }, 0);
-        
-        // Atualizar cálculo de éter com presença
-        updateAbilityEtherCost(abilityItem);
-        
-        // Atualizar quando o valor de éter for alterado
-        abilityItem.querySelector('.ability-ether').addEventListener('input', function() {
-            updateAbilityEtherCost(abilityItem);
-            saveCurrentSheet();
-        });
 
-        // Configurar arrastar e soltar para a habilidade (apenas para mestre)
-        if (state.isMaster) {
-            setupAbilityDragAndDrop(abilityItem);
-        }
-    }
-
-    // Configurar arrastar e soltar para habilidades
-    function setupAbilityDragAndDrop(abilityItem) {
-        abilityItem.addEventListener('dragstart', function(e) {
-            state.dragState.draggedAbility = abilityItem;
-            setTimeout(() => {
-                abilityItem.classList.add('dragging');
-            }, 0);
-            e.dataTransfer.effectAllowed = 'move';
-        });
-
-        abilityItem.addEventListener('dragend', function() {
-            abilityItem.classList.remove('dragging');
-            state.dragState.draggedAbility = null;
-            saveCurrentSheet();
-        });
-    }
-
-    // Configurar zona de soltar para habilidades
-    function setupAbilitiesDropZone() {
-        if (!state.isMaster) return;
-        
-        elements.abilitiesContainer.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            
-            const afterElement = getDragAfterAbility(e.clientY);
-            const draggingAbility = state.dragState.draggedAbility;
-            
-            if (afterElement == null) {
-                elements.abilitiesContainer.appendChild(draggingAbility);
-            } else {
-                elements.abilitiesContainer.insertBefore(draggingAbility, afterElement);
+            // Adicionar arma padrão
+            function addDefaultWeapon() {
+                if (document.querySelectorAll('.weapon-row').length === 0) {
+                    addWeapon('Nova Arma', '', '', '', '');
+                }
             }
-        });
-    }
 
-    // Obter elemento após o qual a habilidade será inserida
-    function getDragAfterAbility(y) {
-        const abilities = [...elements.abilitiesContainer.querySelectorAll('.ability-item:not(.dragging)')];
-        
-        return abilities.reduce((closest, child) => {
-            const box = child.getBoundingClientRect();
-            const offset = y - box.top - box.height / 2;
-            
-            if (offset < 0 && offset > closest.offset) {
-                return { offset: offset, element: child };
-            } else {
-                return closest;
+            // Adicionar arma
+            function addWeapon(name, act, damage, range, size) {
+                const row = document.createElement('tr');
+                row.className = 'weapon-row';
+                row.innerHTML = `
+                    <td><input type="text" class="weapon-name editable" value="${name}"></td>
+                    <td><input type="text" class="weapon-act editable" value="${act}"></td>
+                    <td><input type="text" class="weapon-damage editable" value="${damage}"></td>
+                    <td><input type="text" class="weapon-range editable" value="${range}"></td>
+                    <td><input type="text" class="weapon-size editable" value="${size}"></td>
+                    <td><button class="delete-btn delete-weapon">×</button></td>
+                `;
+                elements.weaponsBody.appendChild(row);
+                
+                // Adicionar evento para o botão de deletar
+                row.querySelector('.delete-weapon').addEventListener('click', function() {
+                    if (confirm('Tem certeza que deseja remover esta arma?')) {
+                        row.remove();
+                        saveCurrentSheet();
+                    }
+                });
+                
+                // Adicionar evento para salvar ao editar
+                row.querySelectorAll('input').forEach(input => {
+                    input.addEventListener('input', saveCurrentSheet);
+                });
             }
-        }, { offset: Number.NEGATIVE_INFINITY }).element;
-    }
 
-    // Atualizar custo de éter considerando presença
-    function updateAbilityEtherCost(abilityItem) {
-        const presenceSkill = document.getElementById('skill-presença');
-        const etherInput = abilityItem.querySelector('.ability-ether');
-        const extraSpan = abilityItem.querySelector('.ability-extra');
-        
-        if (presenceSkill && presenceSkill.value && parseInt(presenceSkill.value) > 100) {
-            const presence = parseInt(presenceSkill.value);
-            const etherCost = parseInt(etherInput.value) || 0;
-            const calculatedCost = Math.floor(etherCost * (presence / 100));
-            
-            extraSpan.textContent = `Custo real: ${calculatedCost}`;
-        } else {
-            extraSpan.textContent = '';
-        }
-    }
+            // Adicionar item padrão
+            function addDefaultItem() {
+                if (document.querySelectorAll('.inventory-item').length === 0) {
+                    addItem('1', 'Novo Item', '', true);
+                }
+            }
 
-    // Usar habilidade/arcana
-    function useAbility(abilityItem) {
-        const presenceSkill = document.getElementById('skill-presença');
-        const etherInput = abilityItem.querySelector('.ability-ether');
-        const currentEther = parseInt(elements.etherCurrent.value) || 0;
-        
-        let etherCost = parseInt(etherInput.value) || 0;
-        
-        // Calcular custo considerando presença
-        if (presenceSkill && presenceSkill.value && parseInt(presenceSkill.value) > 100) {
-            const presence = parseInt(presenceSkill.value);
-            etherCost = Math.floor(etherCost * (presence / 100));
-        }
-        
-        if (etherCost > currentEther) {
-            alert('Éter insuficiente para usar esta habilidade!');
-            return;
-        }
-        
-        // Reduzir éter
-        const newEther = Math.max(0, currentEther - etherCost);
-        elements.etherCurrent.value = newEther;
-        updateProgressBars();
-        saveCurrentSheet();
-        
-        alert(`Habilidade usada! ${etherCost} de éter consumido.`);
-    }
+            // Adicionar item ao inventário
+            function addItem(quantity, name, description, carrying, collapsed = false) {
+                const item = document.createElement('div');
+                item.className = `inventory-item ${collapsed ? 'collapsed' : ''}`;
+                item.draggable = true;
+                item.innerHTML = `
+                    <div class="item-header">
+                        <div class="item-name">
+                            <span class="item-toggle">${collapsed ? '+' : '-'}</span>
+                            <input type="text" class="editable" value="${name}" placeholder="Nome do Item">
+                            <button class="delete-btn delete-item">×</button>
+                        </div>
+                        <div class="item-meta">
+                            <span>Qtd:</span>
+                            <input type="number" class="item-quantity editable" value="${quantity}" min="1">
+                            <span>Carregando:</span>
+                            <input type="checkbox" class="item-carrying" ${carrying ? 'checked' : ''}>
+                        </div>
+                    </div>
+                    <textarea class="item-desc editable">${description}</textarea>
+                `;
+                elements.inventoryContainer.appendChild(item);
+                
+                // Adicionar evento para o botão de deletar
+                const deleteBtn = item.querySelector('.delete-item');
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        if (confirm('Tem certeza que deseja remover este item?')) {
+                            item.remove();
+                            saveCurrentSheet();
+                        }
+                    });
+                }
+                
+                // Adicionar evento para recolher/expandir
+                const toggleBtn = item.querySelector('.item-toggle');
+                item.addEventListener('click', function(e) {
+                    if (e.target.classList.contains('item-toggle') || e.target.closest('.item-name')) {
+                        item.classList.toggle('collapsed');
+                        toggleBtn.textContent = item.classList.contains('collapsed') ? '+' : '-';
+                        
+                        // Ajustar altura da textarea quando expandir
+                        if (!item.classList.contains('collapsed')) {
+                            const textarea = item.querySelector('.item-desc');
+                            setTimeout(() => {
+                                adjustTextareaHeight(textarea);
+                            }, 10); // Pequeno atraso para garantir que a transição tenha terminado
+                        }
+                        
+                        saveCurrentSheet();
+                    }
+                });
 
-    // Adicionar arma padrão
-    function addDefaultWeapon() {
-        if (document.querySelectorAll('.weapon-row').length === 0) {
-            addWeapon('Nova Arma', '', '', '', '');
-        }
-    }
+                // Ajustar altura da textarea
+                setTimeout(() => {
+                    const textarea = item.querySelector('.item-desc');
+                    adjustTextareaHeight(textarea);
+                }, 0);
 
-    // Adicionar arma
-    function addWeapon(name, act, damage, range, size) {
-        const row = document.createElement('tr');
-        row.className = 'weapon-row';
-        row.innerHTML = `
-            <td><input type="text" class="weapon-name editable" value="${name}"></td>
-            <td><input type="text" class="weapon-act editable" value="${act}"></td>
-            <td><input type="text" class="weapon-damage editable" value="${damage}"></td>
-            <td><input type="text" class="weapon-range editable" value="${range}"></td>
-            <td><input type="text" class="weapon-size editable" value="${size}"></td>
-            ${state.isMaster ? '<td><button class="delete-btn delete-weapon">×</button></td>' : '<td></td>'}
-        `;
-        elements.weaponsBody.appendChild(row);
-        
-        // Adicionar evento para o botão de deletar (apenas para mestre)
-        if (state.isMaster) {
-            row.querySelector('.delete-weapon').addEventListener('click', function() {
-                if (confirm('Tem certeza que deseja remover esta arma?')) {
-                    row.remove();
+                // Configurar arrastar e soltar para o item
+                setupInventoryDragAndDrop(item);
+                
+                // Adicionar eventos para salvar ao editar
+                item.querySelectorAll('input, textarea').forEach(input => {
+                    input.addEventListener('input', saveCurrentSheet);
+                });
+                
+                item.querySelector('.item-carrying').addEventListener('change', saveCurrentSheet);
+            }
+
+            // Configurar arrastar e soltar para itens do inventário
+            function setupInventoryDragAndDrop(item) {
+                item.addEventListener('dragstart', function(e) {
+                    state.dragState.draggedItem = item;
+                    setTimeout(() => {
+                        item.classList.add('dragging');
+                    }, 0);
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+
+                item.addEventListener('dragend', function() {
+                    item.classList.remove('dragging');
+                    state.dragState.draggedItem = null;
+                    saveCurrentSheet();
+                });
+            }
+
+            // Configurar zona de soltar para itens do inventário
+            function setupInventoryDropZone() {
+                elements.inventoryContainer.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    
+                    const afterElement = getDragAfterInventoryItem(e.clientY);
+                    const draggingItem = state.dragState.draggedItem;
+                    
+                    if (afterElement == null) {
+                        elements.inventoryContainer.appendChild(draggingItem);
+                    } else {
+                        elements.inventoryContainer.insertBefore(draggingItem, afterElement);
+                    }
+                });
+            }
+
+            // Obter elemento após o qual o item será inserido no inventário
+            function getDragAfterInventoryItem(y) {
+                const items = [...elements.inventoryContainer.querySelectorAll('.inventory-item:not(.dragging)')];
+                
+                return items.reduce((closest, child) => {
+                    const box = child.getBoundingClientRect();
+                    const offset = y - box.top - box.height / 2;
+                    
+                    if (offset < 0 && offset > closest.offset) {
+                        return { offset: offset, element: child };
+                    } else {
+                        return closest;
+                    }
+                }, { offset: Number.NEGATIVE_INFINITY }).element;
+            }
+
+            // Aplicar dano (considerando constituição e armadura)
+            function applyDamage() {
+                const damage = parseInt(elements.damageInput.value) || 0;
+                const constitution = parseInt(elements.constitution.value) || 0;
+                const armor = parseInt(elements.armor.value) || 0;
+                const currentHP = parseInt(elements.hpCurrent.value) || 0;
+                
+                // Calcular dano reduzido
+                const reducedDamage = Math.max(0, damage - constitution - armor);
+                const newHP = Math.max(0, currentHP - reducedDamage);
+                
+                elements.hpCurrent.value = newHP;
+                elements.damageInput.value = '';
+                updateProgressBars();
+                saveCurrentSheet();
+                
+                alert(`Dano aplicado: ${reducedDamage} (${damage} - ${constitution + armor})`);
+            }
+
+            // Aplicar dano real (ignora defesas)
+            function applyRealDamage() {
+                const damage = parseInt(elements.realDamageInput.value) || 0;
+                const currentHP = parseInt(elements.hpCurrent.value) || 0;
+                const newHP = Math.max(0, currentHP - damage);
+                
+                elements.hpCurrent.value = newHP;
+                elements.realDamageInput.value = '';
+                updateProgressBars();
+                saveCurrentSheet();
+                
+                alert(`Dano real aplicado: ${damage}`);
+            }
+
+            // Reduzir éter
+            function reduceEther() {
+                const cost = parseInt(elements.etherCostInput.value) || 0;
+                const currentEther = parseInt(elements.etherCurrent.value) || 0;
+                const newEther = Math.max(0, currentEther - cost);
+                
+                elements.etherCurrent.value = newEther;
+                elements.etherCostInput.value = '';
+                updateProgressBars();
+                saveCurrentSheet();
+                
+                alert(`Éter reduzido em: ${cost}`);
+            }
+
+            // Adicionar éter
+            function addEther() {
+                const amount = parseInt(elements.etherCostInput.value) || 0;
+                const currentEther = parseInt(elements.etherCurrent.value) || 0;
+                const maxEther = parseInt(elements.etherMax.value) || 0;
+                const newEther = Math.min(maxEther, currentEther + amount);
+                
+                elements.etherCurrent.value = newEther;
+                elements.etherCostInput.value = '';
+                updateProgressBars();
+                saveCurrentSheet();
+                
+                alert(`Éter aumentado em: ${amount}`);
+            }
+
+            // Atualizar cálculos
+            function updateCalculations() {
+                // Calcular valores dos atributos
+                updateAttributeCalculation('strength');
+                updateAttributeCalculation('dexterity');
+                updateAttributeCalculation('constitution');
+                updateAttributeCalculation('intelligence');
+                updateAttributeCalculation('wisdom');
+                updateAttributeCalculation('charisma');
+                
+                // Atualizar barras de progresso
+                updateProgressBars();
+                
+                // Atualizar custos de habilidades
+                document.querySelectorAll('.ability-item').forEach(ability => {
+                    updateAbilityEtherCost(ability);
+                });
+            }
+
+            // Calcular valor do atributo (1D, 2D, etc.)
+            function updateAttributeCalculation(attribute) {
+                const value = parseInt(elements[attribute].value) || 0;
+                let calc = '';
+                
+                if (value <= 149) calc = '1D';
+                else if (value >= 150 && value < 250) calc = '2D';
+                else if (value >= 250 && value < 350) calc = '3D';
+                else if (value >= 350 && value < 450) calc = '4D';
+                else if (value >= 450 && value < 550) calc = '5D';
+                else if (value >= 550 && value < 650) calc = '6D';
+                else if (value >= 650 && value < 750) calc = '7D';
+                else if (value >= 750 && value < 850) calc = '8D';
+                else if (value >= 850 && value < 950) calc = '9D';
+                else if (value >= 950 && value < 1050) calc = '10D';
+                else calc = 'Fora da faixa';
+                
+                document.getElementById(`${attribute}-calc`).textContent = calc;
+            }
+
+            // Atualizar barras de progresso
+            function updateProgressBars() {
+                const hpCurrent = parseInt(elements.hpCurrent.value) || 0;
+                const hpMax = parseInt(elements.hpMax.value) || 1;
+                const hpPercent = Math.min(100, (hpCurrent / hpMax * 100)).toFixed(1);
+                elements.hpBar.style.width = hpPercent + '%';
+                elements.hpBar.textContent = hpPercent + '%';
+                
+                const etherCurrent = parseInt(elements.etherCurrent.value) || 0;
+                const etherMax = parseInt(elements.etherMax.value) || 1;
+                const etherPercent = Math.min(100, (etherCurrent / etherMax * 100)).toFixed(1);
+                elements.etherBar.style.width = etherPercent + '%';
+                elements.etherBar.textContent = etherPercent + '%';
+            }
+
+            // Alternar modo de edição
+            function toggleEditMode() {
+                state.dragState.isEditMode = !state.dragState.isEditMode;
+                
+                if (state.dragState.isEditMode) {
+                    // Ativar modo de edição
+                    elements.toggleEditBtn.textContent = 'Salvar Layout';
+                    document.querySelectorAll('.panel').forEach(panel => {
+                        panel.style.cursor = 'grab';
+                        panel.draggable = true;
+                    });
+                    document.querySelectorAll('.drag-handle').forEach(handle => {
+                        handle.style.display = 'block';
+                    });
+                } else {
+                    // Desativar modo de edição
+                    elements.toggleEditBtn.textContent = 'Modo Reorganizar';
+                    document.querySelectorAll('.panel').forEach(panel => {
+                        panel.style.cursor = '';
+                        panel.classList.remove('dragging');
+                        panel.draggable = false;
+                    });
+                    document.querySelectorAll('.drag-handle').forEach(handle => {
+                        handle.style.display = 'none';
+                    });
                     saveCurrentSheet();
                 }
-            });
-        }
-        
-        // Adicionar evento para salvar ao editar
-        row.querySelectorAll('input').forEach(input => {
-            input.addEventListener('input', saveCurrentSheet);
-        });
-    }
+            }
 
-    // Adicionar item padrão
-    function addDefaultItem() {
-        if (document.querySelectorAll('.inventory-item').length === 0) {
-            addItem('1', 'Novo Item', '', true);
-        }
-    }
+            // Iniciar arrastar painel
+            function startDrag(e) {
+                if (!state.dragState.isEditMode) return;
+                
+                const panel = e.target.closest('.panel');
+                if (!panel) return;
+                
+                state.dragState.isDragging = true;
+                state.dragState.draggedPanel = panel;
+                state.dragState.draggedColumn = panel.parentElement;
+                state.dragState.draggedIndex = Array.from(panel.parentElement.children).indexOf(panel);
+                
+                panel.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', panel.dataset.panelId);
+                e.dataTransfer.effectAllowed = 'move';
+            }
 
-    // Adicionar item ao inventário
-    function addItem(quantity, name, description, carrying, collapsed = false) {
-        const item = document.createElement('div');
-        item.className = `inventory-item ${collapsed ? 'collapsed' : ''}`;
-        item.draggable = state.isMaster;
-        item.innerHTML = `
-            <div class="item-header">
-                <div class="item-name">
-                    <span class="item-toggle">${collapsed ? '+' : '-'}</span>
-                    <input type="text" class="editable" value="${name}" placeholder="Nome do Item">
-                    ${state.isMaster ? '<button class="delete-btn delete-item">×</button>' : ''}
-                </div>
-                <div class="item-meta">
-                    <span>Qtd:</span>
-                    <input type="number" class="item-quantity editable" value="${quantity}" min="1">
-                    <span>Carregando:</span>
-                    <input type="checkbox" class="item-carrying" ${carrying ? 'checked' : ''}>
-                </div>
-            </div>
-            <textarea class="item-desc editable">${description}</textarea>
-        `;
-        elements.inventoryContainer.appendChild(item);
-        
-        // Adicionar evento para o botão de deletar (apenas para mestre)
-        if (state.isMaster) {
-            const deleteBtn = item.querySelector('.delete-item');
-            if (deleteBtn) {
-                deleteBtn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    if (confirm('Tem certeza que deseja remover este item?')) {
-                        item.remove();
+            // Durante o arrastar
+            function dragOver(e) {
+                if (!state.dragState.isDragging || !state.dragState.isEditMode) return;
+                
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                
+                const column = e.target.closest('.grid-column');
+                if (!column) return;
+                
+                const panels = Array.from(column.children).filter(el => el.classList.contains('panel') && el !== state.dragState.draggedPanel);
+                const afterElement = getDragAfterElement(column, e.clientY);
+                
+                // Mostrar indicador de posição
+                const dropIndicator = column.querySelector('.drop-indicator') || document.createElement('div');
+                dropIndicator.className = 'drop-indicator active';
+                
+                if (afterElement) {
+                    column.insertBefore(dropIndicator, afterElement);
+                } else {
+                    column.appendChild(dropIndicator);
+                }
+            }
+
+            // Obter elemento após o qual o painel será inserido
+            function getDragAfterElement(column, y) {
+                const panels = Array.from(column.children).filter(el => el.classList.contains('panel') && el !== state.dragState.draggedPanel);
+                
+                return panels.reduce((closest, child) => {
+                    const box = child.getBoundingClientRect();
+                    const offset = y - box.top - box.height / 2;
+                    
+                    if (offset < 0 && offset > closest.offset) {
+                        return { offset: offset, element: child };
+                    } else {
+                        return closest;
+                    }
+                }, { offset: Number.NEGATIVE_INFINITY }).element;
+            }
+
+            // Finalizar arrastar
+            function endDrag(e) {
+                if (!state.dragState.isDragging || !state.dragState.isEditMode) return;
+                
+                e.preventDefault();
+                
+                const column = e.target.closest('.grid-column');
+                if (column) {
+                    const afterElement = getDragAfterElement(column, e.clientY);
+                    const dropIndicator = column.querySelector('.drop-indicator');
+                    
+                    if (dropIndicator) {
+                        if (afterElement) {
+                            column.insertBefore(state.dragState.draggedPanel, afterElement);
+                        } else {
+                            column.appendChild(state.dragState.draggedPanel);
+                        }
+                        
+                        dropIndicator.remove();
+                    }
+                }
+                
+                // Limpar estado
+                state.dragState.draggedPanel.classList.remove('dragging');
+                state.dragState.isDragging = false;
+                state.dragState.draggedPanel = null;
+                state.dragState.draggedColumn = null;
+                state.dragState.draggedIndex = -1;
+                saveCurrentSheet();
+            }
+
+            // Salvar ficha atual
+            function saveCurrentSheet() {
+                if (!state.currentSheetId) return;
+                
+                const sheet = state.sheets.find(s => s.id === state.currentSheetId);
+                if (!sheet) return;
+                
+                // Atualizar dados básicos
+                sheet.characterName = elements.characterName.value;
+                sheet.playerName = elements.playerName.value;
+                sheet.deity = elements.deity.value;
+                sheet.age = elements.age.value;
+                sheet.etherLevel = elements.etherLevel.value;
+                sheet.potential = elements.potential.value;
+                sheet.awakening = elements.awakening.value;
+                sheet.armor = elements.armor.value;
+                sheet.strength = elements.strength.value;
+                sheet.dexterity = elements.dexterity.value;
+                sheet.constitution = elements.constitution.value;
+                sheet.intelligence = elements.intelligence.value;
+                sheet.wisdom = elements.wisdom.value;
+                sheet.charisma = elements.charisma.value;
+                sheet.hpCurrent = elements.hpCurrent.value;
+                sheet.hpMax = elements.hpMax.value;
+                sheet.etherCurrent = elements.etherCurrent.value;
+                sheet.etherMax = elements.etherMax.value;
+                sheet.notes = elements.notes.value;
+                sheet.updatedAt = new Date().toISOString();
+                
+                // Atualizar layout dos painéis
+                sheet.panelLayout = getCurrentPanelLayout();
+                
+                // Atualizar habilidades
+                sheet.abilities = [];
+                document.querySelectorAll('.ability-item').forEach(ability => {
+                    sheet.abilities.push({
+                        name: ability.querySelector('.ability-name-input').value,
+                        ether: ability.querySelector('.ability-ether').value,
+                        grade: ability.querySelector('.ability-grade').value,
+                        description: ability.querySelector('.ability-desc').value,
+                        type: ability.querySelector('.ability-type').value,
+                        duration: ability.querySelector('.ability-duration').value,
+                        range: ability.querySelector('.ability-range').value,
+                        collapsed: ability.classList.contains('collapsed')
+                    });
+                });
+                
+                // Atualizar armas
+                sheet.weapons = [];
+                document.querySelectorAll('.weapon-row').forEach(weapon => {
+                    sheet.weapons.push({
+                        name: weapon.querySelector('.weapon-name').value,
+                        act: weapon.querySelector('.weapon-act').value,
+                        damage: weapon.querySelector('.weapon-damage').value,
+                        range: weapon.querySelector('.weapon-range').value,
+                        size: weapon.querySelector('.weapon-size').value
+                    });
+                });
+                
+                // Atualizar inventário
+                sheet.inventory = [];
+                document.querySelectorAll('.inventory-item').forEach(item => {
+                    sheet.inventory.push({
+                        quantity: item.querySelector('.item-quantity').value,
+                        name: item.querySelector('.item-name input').value,
+                        description: item.querySelector('.item-desc').value,
+                        carrying: item.querySelector('.item-carrying').checked,
+                        collapsed: item.classList.contains('collapsed')
+                    });
+                });
+                
+                // Atualizar perícias
+                sheet.skills = {};
+                defaultSkills.forEach(skill => {
+                    const skillId = `skill-${skill.toLowerCase().replace(/\s+/g, '-')}`;
+                    const skillInput = document.getElementById(skillId);
+                    if (skillInput) {
+                        sheet.skills[skillId] = skillInput.value;
+                    }
+                });
+                
+                saveSheets();
+            }
+
+            // Obter layout atual dos painéis
+            function getCurrentPanelLayout() {
+                return {
+                    'column-1': Array.from(elements.column1.children)
+                        .filter(el => el.classList.contains('panel'))
+                        .map(panel => panel.dataset.panelId),
+                    'column-2': Array.from(elements.column2.children)
+                        .filter(el => el.classList.contains('panel'))
+                        .map(panel => panel.dataset.panelId)
+                };
+            }
+
+            // Salvar fichas no armazenamento local
+            function saveSheets() {
+                localStorage.setItem('rpgSheets', JSON.stringify(state.sheets));
+            }
+
+            // Excluir ficha
+            function deleteSheet(sheetId) {
+                if (!confirm('Tem certeza que deseja excluir esta ficha? Esta ação não pode ser desfeita.')) {
+                    return;
+                }
+                
+                state.sheets = state.sheets.filter(sheet => sheet.id !== sheetId);
+                saveSheets();
+                renderSheets();
+                showToast('Ficha excluída com sucesso');
+                
+                // Se estivermos visualizando a ficha que foi excluída, voltar ao hub
+                if (state.currentSheetId === sheetId) {
+                    showHub();
+                }
+            }
+
+            // Mostrar hub
+            function showHub() {
+                elements.hubView.style.display = 'block';
+                elements.sheetView.style.display = 'none';
+                window.history.pushState({ view: 'hub' }, '', window.location.pathname);
+                loadSheets(); // Atualizar sempre que voltar ao hub
+            }
+
+            // Mostrar ficha
+            function showSheet() {
+                elements.hubView.style.display = 'none';
+                elements.sheetView.style.display = 'block';
+                window.history.pushState({ view: 'sheet', sheetId: state.currentSheetId }, '', `?sheet=${state.currentSheetId}`);
+            }
+
+            // Mostrar modal
+            function openModal(modal) {
+                modal.style.display = 'flex';
+            }
+
+            // Fechar modal
+            function closeModal(modal) {
+                modal.style.display = 'none';
+            }
+
+            // Mostrar notificação toast
+            function showToast(message, duration = 3000) {
+                elements.toast.textContent = message;
+                elements.toast.classList.add('show');
+                
+                setTimeout(() => {
+                    elements.toast.classList.remove('show');
+                }, duration);
+            }
+
+            // Ajustar altura de textarea
+            function adjustTextareaHeight(textarea) {
+                textarea.style.height = 'auto';
+                textarea.style.height = (textarea.scrollHeight + 20) + 'px';
+            }
+
+            // Configurar event listeners
+            function setupEventListeners() {
+                // Eventos do Hub
+                elements.newSheetBtn.addEventListener('click', () => {
+                    elements.newSheetName.value = '';
+                    elements.newSheetPlayer.value = '';
+                    openModal(elements.newSheetModal);
+                });
+                
+                elements.createSheetBtn.addEventListener('click', createNewSheet);
+                elements.cancelSheetBtn.addEventListener('click', () => closeModal(elements.newSheetModal));
+                
+                // Fechar modais ao clicar no X
+                document.querySelectorAll('.close-modal').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        closeModal(this.closest('.modal'));
+                    });
+                });
+                
+                // Fechar modais ao clicar fora
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.addEventListener('click', function(e) {
+                        if (e.target === this) {
+                            closeModal(this);
+                        }
+                    });
+                });
+                
+                elements.refreshBtn.addEventListener('click', () => {
+                    loadSheets();
+                    showToast('Fichas atualizadas');
+                });
+                
+                elements.searchBtn.addEventListener('click', () => {
+                    renderSheets(elements.searchInput.value.trim());
+                });
+                
+                elements.searchInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        renderSheets(elements.searchInput.value.trim());
+                    }
+                });
+                
+                // Ações nas fichas (editar, excluir)
+                elements.sheetsContainer.addEventListener('click', (e) => {
+                    const sheetCard = e.target.closest('.sheet-card');
+                    if (!sheetCard) return;
+                    
+                    const sheetId = sheetCard.dataset.sheetId;
+                    const action = e.target.dataset.action;
+                    
+                    if (!action) return;
+                    
+                    switch (action) {
+                        case 'edit':
+                            openSheet(sheetId);
+                            break;
+                        case 'delete':
+                            deleteSheet(sheetId);
+                            break;
+                        case 'update-all':
+                            // Este caso é tratado individualmente no renderSheets
+                            break;
+                    }
+                });
+                
+                // Eventos da Ficha
+                elements.backBtn.addEventListener('click', showHub);
+                
+                // Salvar ao mudar qualquer campo
+                document.querySelectorAll('input, textarea, select').forEach(element => {
+                    if (element.classList.contains('editable')) {
+                        element.addEventListener('input', saveCurrentSheet);
+                        element.addEventListener('change', saveCurrentSheet);
+                    }
+                });
+                
+                // Atualizar cálculos quando atributos são alterados
+                document.querySelectorAll('.stat-input').forEach(input => {
+                    input.addEventListener('input', function() {
+                        const attribute = this.id;
+                        updateAttributeCalculation(attribute);
                         saveCurrentSheet();
+                    });
+                });
+                
+                // Atualizar barras de progresso quando vida/éter são alterados
+                elements.hpCurrent.addEventListener('input', updateProgressBars);
+                elements.hpMax.addEventListener('input', updateProgressBars);
+                elements.etherCurrent.addEventListener('input', updateProgressBars);
+                elements.etherMax.addEventListener('input', updateProgressBars);
+                
+                // Botão para adicionar habilidade
+                elements.addAbilityBtn.addEventListener('click', function() {
+                    addAbility('Nova Habilidade', '0', '1', 'Descrição da habilidade...', 'Passiva', 'Duração', 'Alcance');
+                    saveCurrentSheet();
+                });
+                
+                // Botão para adicionar arma
+                elements.addWeaponBtn.addEventListener('click', function() {
+                    addWeapon('Nova Arma', '', '', '', '');
+                    saveCurrentSheet();
+                });
+                
+                // Botão para adicionar item
+                elements.addItemBtn.addEventListener('click', function() {
+                    addItem('1', 'Novo Item', '', true);
+                    saveCurrentSheet();
+                });
+                
+                // Botão para aplicar dano
+                elements.applyDamageBtn.addEventListener('click', applyDamage);
+                elements.damageInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') applyDamage();
+                });
+                
+                // Botão para aplicar dano real
+                elements.applyRealDamageBtn.addEventListener('click', applyRealDamage);
+                elements.realDamageInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') applyRealDamage();
+                });
+                
+                // Botão para reduzir éter
+                elements.applyEtherCostBtn.addEventListener('click', reduceEther);
+                elements.etherCostInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') reduceEther();
+                });
+                
+                // Botão para adicionar éter
+                elements.addEtherBtn.addEventListener('click', addEther);
+                elements.etherCostInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') addEther();
+                });
+                
+                // Atualizar cálculos de custo de habilidades quando presença é alterada
+                const presenceSkill = document.getElementById('skill-presença');
+                if (presenceSkill) {
+                    presenceSkill.addEventListener('input', function() {
+                        document.querySelectorAll('.ability-item').forEach(ability => {
+                            updateAbilityEtherCost(ability);
+                        });
+                    });
+                }
+
+                // Eventos de arrastar e soltar
+                elements.toggleEditBtn.addEventListener('click', toggleEditMode);
+                
+                document.querySelectorAll('.panel').forEach(panel => {
+                    panel.addEventListener('dragstart', startDrag);
+                    panel.addEventListener('dragend', endDrag);
+                    panel.draggable = state.dragState.isEditMode;
+                });
+                
+                document.querySelectorAll('.grid-column').forEach(column => {
+                    column.addEventListener('dragover', dragOver);
+                    column.addEventListener('dragleave', () => {
+                        const indicator = column.querySelector('.drop-indicator');
+                        if (indicator) indicator.classList.remove('active');
+                    });
+                    column.addEventListener('drop', endDrag);
+                });
+
+                // Configurar arrastar e soltar para habilidades
+                setupAbilitiesDropZone();
+
+                // Configurar arrastar e soltar para itens do inventário
+                setupInventoryDropZone();
+
+                // Observar mudanças de tamanho nos painéis
+                const resizeObserver = new ResizeObserver(() => {
+                    document.querySelectorAll('.panel').forEach(panel => {
+                        panel.style.minHeight = 'auto';
+                        panel.style.minHeight = panel.scrollHeight + 'px';
+                    });
+                });
+
+                document.querySelectorAll('.panel-content').forEach(content => {
+                    resizeObserver.observe(content);
+                });
+
+                // Ajustar altura inicial das textareas
+                document.querySelectorAll('textarea').forEach(textarea => {
+                    textarea.style.height = 'auto';
+                    textarea.style.height = (textarea.scrollHeight + 20) + 'px';
+                });
+                
+                // Lidar com navegação pelo histórico
+                window.addEventListener('popstate', function(e) {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const sheetId = urlParams.get('sheet');
+                    
+                    if (sheetId) {
+                        openSheet(sheetId);
+                    } else {
+                        showHub();
                     }
                 });
             }
-        }
-        
-        // Adicionar evento para recolher/expandir
-        const toggleBtn = item.querySelector('.item-toggle');
-        item.addEventListener('click', function(e) {
-            if (e.target.classList.contains('item-toggle') || e.target.closest('.item-name')) {
-                item.classList.toggle('collapsed');
-                toggleBtn.textContent = item.classList.contains('collapsed') ? '+' : '-';
-                
-                // Ajustar altura da textarea quando expandir
-                if (!item.classList.contains('collapsed')) {
-                    const textarea = item.querySelector('.item-desc');
-                    setTimeout(() => {
-                        adjustTextareaHeight(textarea);
-                    }, 10); // Pequeno atraso para garantir que a transição tenha terminado
-                }
-                
-                saveCurrentSheet();
-            }
+
+            // Inicializar a aplicação
+            init();
         });
-
-        // Ajustar altura da textarea
-        setTimeout(() => {
-            const textarea = item.querySelector('.item-desc');
-            adjustTextareaHeight(textarea);
-        }, 0);
-
-        // Configurar arrastar e soltar para o item (apenas para mestre)
-        if (state.isMaster) {
-            setupInventoryDragAndDrop(item);
-        }
-        
-        // Adicionar eventos para salvar ao editar
-        item.querySelectorAll('input, textarea').forEach(input => {
-            input.addEventListener('input', saveCurrentSheet);
-        });
-        
-        item.querySelector('.item-carrying').addEventListener('change', saveCurrentSheet);
-    }
-
-    // Configurar arrastar e soltar para itens do inventário
-    function setupInventoryDragAndDrop(item) {
-        item.addEventListener('dragstart', function(e) {
-            state.dragState.draggedItem = item;
-            setTimeout(() => {
-                item.classList.add('dragging');
-            }, 0);
-            e.dataTransfer.effectAllowed = 'move';
-        });
-
-        item.addEventListener('dragend', function() {
-            item.classList.remove('dragging');
-            state.dragState.draggedItem = null;
-            saveCurrentSheet();
-        });
-    }
-
-    // Configurar zona de soltar para itens do inventário
-    function setupInventoryDropZone() {
-        if (!state.isMaster) return;
-        
-        elements.inventoryContainer.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            
-            const afterElement = getDragAfterInventoryItem(e.clientY);
-            const draggingItem = state.dragState.draggedItem;
-            
-            if (afterElement == null) {
-                elements.inventoryContainer.appendChild(draggingItem);
-            } else {
-                elements.inventoryContainer.insertBefore(draggingItem, afterElement);
-            }
-        });
-    }
-
-    // Obter elemento após o qual o item será inserido no inventário
-    function getDragAfterInventoryItem(y) {
-        const items = [...elements.inventoryContainer.querySelectorAll('.inventory-item:not(.dragging)')];
-        
-        return items.reduce((closest, child) => {
-            const box = child.getBoundingClientRect();
-            const offset = y - box.top - box.height / 2;
-            
-            if (offset < 0 && offset > closest.offset) {
-                return { offset: offset, element: child };
-            } else {
-                return closest;
-            }
-        }, { offset: Number.NEGATIVE_INFINITY }).element;
-    }
-
-    // Aplicar dano (considerando constituição e armadura)
-    function applyDamage() {
-        const damage = parseInt(elements.damageInput.value) || 0;
-        const constitution = parseInt(elements.constitution.value) || 0;
-        const armor = parseInt(elements.armor.value) || 0;
-        const currentHP = parseInt(elements.hpCurrent.value) || 0;
-        
-        // Calcular dano reduzido
-        const reducedDamage = Math.max(0, damage - constitution - armor);
-        const newHP = Math.max(0, currentHP - reducedDamage);
-        
-        elements.hpCurrent.value = newHP;
-        elements.damageInput.value = '';
-        updateProgressBars();
-        saveCurrentSheet();
-        
-        alert(`Dano aplicado: ${reducedDamage} (${damage} - ${constitution + armor})`);
-    }
-
-    // Aplicar dano real (ignora defesas)
-    function applyRealDamage() {
-        const damage = parseInt(elements.realDamageInput.value) || 0;
-        const currentHP = parseInt(elements.hpCurrent.value) || 0;
-        const newHP = Math.max(0, currentHP - damage);
-        
-        elements.hpCurrent.value = newHP;
-        elements.realDamageInput.value = '';
-        updateProgressBars();
-        saveCurrentSheet();
-        
-        alert(`Dano real aplicado: ${damage}`);
-    }
-
-    // Reduzir éter
-    function reduceEther() {
-        const cost = parseInt(elements.etherCostInput.value) || 0;
-        const currentEther = parseInt(elements.etherCurrent.value) || 0;
-        const newEther = Math.max(0, currentEther - cost);
-        
-        elements.etherCurrent.value = newEther;
-        elements.etherCostInput.value = '';
-        updateProgressBars();
-        saveCurrentSheet();
-        
-        alert(`Éter reduzido em: ${cost}`);
-    }
-
-    // Adicionar éter
-    function addEther() {
-        const amount = parseInt(elements.etherCostInput.value) || 0;
-        const currentEther = parseInt(elements.etherCurrent.value) || 0;
-        const maxEther = parseInt(elements.etherMax.value) || 0;
-        const newEther = Math.min(maxEther, currentEther + amount);
-        
-        elements.etherCurrent.value = newEther;
-        elements.etherCostInput.value = '';
-        updateProgressBars();
-        saveCurrentSheet();
-        
-        alert(`Éter aumentado em: ${amount}`);
-    }
-
-    // Atualizar cálculos
-    function updateCalculations() {
-        // Calcular valores dos atributos
-        updateAttributeCalculation('strength');
-        updateAttributeCalculation('dexterity');
-        updateAttributeCalculation('constitution');
-        updateAttributeCalculation('intelligence');
-        updateAttributeCalculation('wisdom');
-        updateAttributeCalculation('charisma');
-        
-        // Atualizar barras de progresso
-        updateProgressBars();
-        
-        // Atualizar custos de habilidades
-        document.querySelectorAll('.ability-item').forEach(ability => {
-            updateAbilityEtherCost(ability);
-        });
-    }
-
-    // Calcular valor do atributo (1D, 2D, etc.)
-    function updateAttributeCalculation(attribute) {
-        const value = parseInt(elements[attribute].value) || 0;
-        let calc = '';
-        
-        if (value <= 149) calc = '1D';
-        else if (value >= 150 && value < 250) calc = '2D';
-        else if (value >= 250 && value < 350) calc = '3D';
-        else if (value >= 350 && value < 450) calc = '4D';
-        else if (value >= 450 && value < 550) calc = '5D';
-        else if (value >= 550 && value < 650) calc = '6D';
-        else if (value >= 650 && value < 750) calc = '7D';
-        else if (value >= 750 && value < 850) calc = '8D';
-        else if (value >= 850 && value < 950) calc = '9D';
-        else if (value >= 950 && value < 1050) calc = '10D';
-        else calc = 'Fora da faixa';
-        
-        document.getElementById(`${attribute}-calc`).textContent = calc;
-    }
-
-    // Atualizar barras de progresso
-    function updateProgressBars() {
-        const hpCurrent = parseInt(elements.hpCurrent.value) || 0;
-        const hpMax = parseInt(elements.hpMax.value) || 1;
-        const hpPercent = Math.min(100, (hpCurrent / hpMax * 100)).toFixed(1);
-        elements.hpBar.style.width = hpPercent + '%';
-        elements.hpBar.textContent = hpPercent + '%';
-        
-        const etherCurrent = parseInt(elements.etherCurrent.value) || 0;
-        const etherMax = parseInt(elements.etherMax.value) || 1;
-        const etherPercent = Math.min(100, (etherCurrent / etherMax * 100)).toFixed(1);
-        elements.etherBar.style.width = etherPercent + '%';
-        elements.etherBar.textContent = etherPercent + '%';
-    }
-
-    // Alternar modo de edição (apenas para mestre)
-    function toggleEditMode() {
-        if (!state.isMaster) return;
-        
-        state.dragState.isEditMode = !state.dragState.isEditMode;
-        
-        if (state.dragState.isEditMode) {
-            // Ativar modo de edição
-            elements.toggleEditBtn.textContent = 'Salvar Layout';
-            document.querySelectorAll('.panel').forEach(panel => {
-                panel.style.cursor = 'grab';
-                panel.draggable = true;
-            });
-            document.querySelectorAll('.drag-handle').forEach(handle => {
-                handle.style.display = 'block';
-            });
-        } else {
-            // Desativar modo de edição
-            elements.toggleEditBtn.textContent = 'Modo Reorganizar';
-            document.querySelectorAll('.panel').forEach(panel => {
-                panel.style.cursor = '';
-                panel.classList.remove('dragging');
-                panel.draggable = false;
-            });
-            document.querySelectorAll('.drag-handle').forEach(handle => {
-                handle.style.display = 'none';
-            });
-            saveCurrentSheet();
-        }
-    }
-
-    // Iniciar arrastar painel (apenas para mestre)
-    function startDrag(e) {
-        if (!state.dragState.isEditMode || !state.isMaster) return;
-        
-        const panel = e.target.closest('.panel');
-        if (!panel) return;
-        
-        state.dragState.isDragging = true;
-        state.dragState.draggedPanel = panel;
-        state.dragState.draggedColumn = panel.parentElement;
-        state.dragState.draggedIndex = Array.from(panel.parentElement.children).indexOf(panel);
-        
-        panel.classList.add('dragging');
-        e.dataTransfer.setData('text/plain', panel.dataset.panelId);
-        e.dataTransfer.effectAllowed = 'move';
-    }
-
-    // Durante o arrastar (apenas para mestre)
-    function dragOver(e) {
-        if (!state.dragState.isDragging || !state.dragState.isEditMode || !state.isMaster) return;
-        
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        
-        const column = e.target.closest('.grid-column');
-        if (!column) return;
-        
-        const panels = Array.from(column.children).filter(el => el.classList.contains('panel') && el !== state.dragState.draggedPanel);
-        const afterElement = getDragAfterElement(column, e.clientY);
-        
-        // Mostrar indicador de posição
-        const dropIndicator = column.querySelector('.drop-indicator') || document.createElement('div');
-        dropIndicator.className = 'drop-indicator active';
-        
-        if (afterElement) {
-            column.insertBefore(dropIndicator, afterElement);
-        } else {
-            column.appendChild(dropIndicator);
-        }
-    }
-
-    // Obter elemento após o qual o painel será inserido
-    function getDragAfterElement(column, y) {
-        const panels = Array.from(column.children).filter(el => el.classList.contains('panel') && el !== state.dragState.draggedPanel);
-        
-        return panels.reduce((closest, child) => {
-            const box = child.getBoundingClientRect();
-            const offset = y - box.top - box.height / 2;
-            
-            if (offset < 0 && offset > closest.offset) {
-                return { offset: offset, element: child };
-            } else {
-                return closest;
-            }
-        }, { offset: Number.NEGATIVE_INFINITY }).element;
-    }
-
-    // Finalizar arrastar (apenas para mestre)
-    function endDrag(e) {
-        if (!state.dragState.isDragging || !state.dragState.isEditMode || !state.isMaster) return;
-        
-        e.preventDefault();
-        
-        const column = e.target.closest('.grid-column');
-        if (column) {
-            const afterElement = getDragAfterElement(column, e.clientY);
-            const dropIndicator = column.querySelector('.drop-indicator');
-            
-            if (dropIndicator) {
-                if (afterElement) {
-                    column.insertBefore(state.dragState.draggedPanel, afterElement);
-                } else {
-                    column.appendChild(state.dragState.draggedPanel);
-                }
-                
-                dropIndicator.remove();
-            }
-        }
-        
-        // Limpar estado
-        state.dragState.draggedPanel.classList.remove('dragging');
-        state.dragState.isDragging = false;
-        state.dragState.draggedPanel = null;
-        state.dragState.draggedColumn = null;
-        state.dragState.draggedIndex = -1;
-        saveCurrentSheet();
-    }
-
-    // Salvar ficha atual
-    function saveCurrentSheet() {
-        if (!state.currentSheetId) return;
-        
-        const sheet = state.sheets.find(s => s.id === state.currentSheetId);
-        if (!sheet) return;
-        
-        // Atualizar dados básicos
-        sheet.characterName = elements.characterName.value;
-        sheet.playerName = elements.playerName.value;
-        sheet.deity = elements.deity.value;
-        sheet.age = elements.age.value;
-        sheet.etherLevel = elements.etherLevel.value;
-        sheet.potential = elements.potential.value;
-        sheet.awakening = elements.awakening.value;
-        sheet.armor = elements.armor.value;
-        sheet.strength = elements.strength.value;
-        sheet.dexterity = elements.dexterity.value;
-        sheet.constitution = elements.constitution.value;
-        sheet.intelligence = elements.intelligence.value;
-        sheet.wisdom = elements.wisdom.value;
-        sheet.charisma = elements.charisma.value;
-        sheet.hpCurrent = elements.hpCurrent.value;
-        sheet.hpMax = elements.hpMax.value;
-        sheet.etherCurrent = elements.etherCurrent.value;
-        sheet.etherMax = elements.etherMax.value;
-        sheet.notes = elements.notes.value;
-        sheet.updatedAt = new Date().toISOString();
-        
-        // Atualizar layout dos painéis
-        sheet.panelLayout = getCurrentPanelLayout();
-        
-        // Atualizar habilidades
-        sheet.abilities = [];
-        document.querySelectorAll('.ability-item').forEach(ability => {
-            sheet.abilities.push({
-                name: ability.querySelector('.ability-name-input').value,
-                ether: ability.querySelector('.ability-ether').value,
-                grade: ability.querySelector('.ability-grade').value,
-                description: ability.querySelector('.ability-desc').value,
-                type: ability.querySelector('.ability-type').value,
-                duration: ability.querySelector('.ability-duration').value,
-                range: ability.querySelector('.ability-range').value,
-                collapsed: ability.classList.contains('collapsed')
-            });
-        });
-        
-        // Atualizar armas
-        sheet.weapons = [];
-        document.querySelectorAll('.weapon-row').forEach(weapon => {
-            sheet.weapons.push({
-                name: weapon.querySelector('.weapon-name').value,
-                act: weapon.querySelector('.weapon-act').value,
-                damage: weapon.querySelector('.weapon-damage').value,
-                range: weapon.querySelector('.weapon-range').value,
-                size: weapon.querySelector('.weapon-size').value
-            });
-        });
-        
-        // Atualizar inventário
-        sheet.inventory = [];
-        document.querySelectorAll('.inventory-item').forEach(item => {
-            sheet.inventory.push({
-                quantity: item.querySelector('.item-quantity').value,
-                name: item.querySelector('.item-name input').value,
-                description: item.querySelector('.item-desc').value,
-                carrying: item.querySelector('.item-carrying').checked,
-                collapsed: item.classList.contains('collapsed')
-            });
-        });
-        
-        // Atualizar perícias
-        sheet.skills = {};
-        defaultSkills.forEach(skill => {
-            const skillId = `skill-${skill.toLowerCase().replace(/\s+/g, '-')}`;
-            const skillInput = document.getElementById(skillId);
-            if (skillInput) {
-                sheet.skills[skillId] = skillInput.value;
-            }
-        });
-        
-        saveSheets();
-    }
-
-    // Obter layout atual dos painéis
-    function getCurrentPanelLayout() {
-        return {
-            'column-1': Array.from(elements.column1.children)
-                .filter(el => el.classList.contains('panel'))
-                .map(panel => panel.dataset.panelId),
-            'column-2': Array.from(elements.column2.children)
-                .filter(el => el.classList.contains('panel'))
-                .map(panel => panel.dataset.panelId)
-        };
-    }
-
-    // Salvar fichas no armazenamento local
-    function saveSheets() {
-        localStorage.setItem('rpgSheets', JSON.stringify(state.sheets));
-    }
-
-    // Excluir ficha (apenas para mestre)
-    function deleteSheet(sheetId) {
-        if (!state.isMaster) return;
-        
-        if (!confirm('Tem certeza que deseja excluir esta ficha? Esta ação não pode ser desfeita.')) {
-            return;
-        }
-        
-        state.sheets = state.sheets.filter(sheet => sheet.id !== sheetId);
-        saveSheets();
-        renderSheets();
-        showToast('Ficha excluída com sucesso');
-        
-        // Se estivermos visualizando a ficha que foi excluída, voltar ao hub
-        if (state.currentSheetId === sheetId) {
-            showHub();
-        }
-    }
-
-    // Mostrar hub
-    function showHub() {
-        elements.hubView.style.display = 'block';
-        elements.sheetView.style.display = 'none';
-        loadSheets();
-    }
-
-    // Mostrar ficha
-    function showSheet() {
-        elements.hubView.style.display = 'none';
-        elements.sheetView.style.display = 'block';
-    }
-
-    // Mostrar notificação toast
-    function showToast(message, duration = 3000) {
-        elements.toast.textContent = message;
-        elements.toast.classList.add('show');
-        setTimeout(() => elements.toast.classList.remove('show'), duration);
-    }
-
-    // Fechar modal
-    function closeModal(modal) {
-        modal.style.display = 'none';
-    }
-
-    // Configurar event listeners
-    function setupEventListeners() {
-        elements.newSheetBtn.addEventListener('click', () => {
-            elements.newSheetName.value = '';
-            elements.newSheetPlayer.value = '';
-            openModal(elements.newSheetModal);
-        });
-        elements.createSheetBtn.addEventListener('click', createNewSheet);
-        elements.cancelSheetBtn.addEventListener('click', () => closeModal(elements.newSheetModal));
-        elements.refreshBtn.addEventListener('click', () => {
-            loadSheets();
-            showToast('Fichas atualizadas');
-        });
-        elements.searchBtn.addEventListener('click', () => {
-            renderSheets(elements.searchInput.value.trim());
-        });
-        elements.searchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') renderSheets(elements.searchInput.value.trim());
-        });
-        elements.sheetsContainer.addEventListener('click', (e) => {
-            const sheetCard = e.target.closest('.sheet-card');
-            if (!sheetCard) return;
-            const sheetId = sheetCard.dataset.sheetId;
-            const action = e.target.dataset.action;
-            if (!action) return;
-            switch (action) {
-                case 'edit':
-                    openSheet(sheetId);
-                    break;
-                case 'delete':
-                    if (state.isMaster) deleteSheet(sheetId);
-                    break;
-            }
-        });
-        elements.backBtn.addEventListener('click', showHub);
-        // ...adicione os outros listeners do seu código...
-    }
-
-    // Inicializar
-    init();
-});
-</script>
+    </script>
+</body>
+</html>
