@@ -312,7 +312,7 @@
 
         .character-info-item {
             flex: 1;
-            min-width: 120px;
+            min-width: 100px;
         }
 
         .character-info-item.small {
@@ -1252,20 +1252,36 @@
                     <h3>PERSONAGEM</h3>
                     <input type="text" class="editable" id="character-name" placeholder="Nome do Personagem">
                 </div>
+                <div class="character-info-item small">
+                    <h3>RAÇA</h3>
+                    <input type="text" class="editable" id="race" placeholder="Raça">
+                </div>
+                <div class="character-info-item small">
+                    <h3>IDADE</h3>
+                    <input type="text" class="editable" id="age" placeholder="Idade">
+                </div>
                 <div class="character-info-item">
                     <h3>JOGADOR</h3>
                     <input type="text" class="editable" id="player-name" placeholder="Nome do Jogador">
+                </div>
+                <div class="character-info-item">
+                    <h3>TRAÇOS FAMILIARES</h3>
+                    <input type="text" class="editable" id="family-trace" placeholder="Traços Familiares">
+                </div>
+                <div class="character-info-item">
+                    <h3>TRAÇOS INICIAIS</h3>
+                    <input type="text" class="editable" id="initial-trace" placeholder="Traços iniciais">
+                </div>
+                <div class="character-info-item small">
+                    <h3>ALINHAMENTO</h3>
+                    <input type="text" class="editable" id="alignment" placeholder="Alinhamento">
                 </div>
                 <div class="character-info-item">
                     <h3>DIVINDADE</h3>
                     <input type="text" class="editable" id="deity" placeholder="Divindade">
                 </div>
                 <div class="character-info-item small">
-                    <h3>IDADE</h3>
-                    <input type="text" class="editable" id="age" placeholder="Idade">
-                </div>
-                <div class="character-info-item small">
-                    <h3>NÍVEL DE ÉTER</h3>
+                    <h3>NV DE ÉTER</h3>
                     <input type="text" class="editable" id="ether-level" placeholder="Nível">
                 </div>
                 <div class="character-info-item small">
@@ -1509,10 +1525,14 @@
                 sheetView: document.getElementById('sheet-view'),
                 backBtn: document.getElementById('back-btn'),
                 characterName: document.getElementById('character-name'),
+                race: document.getElementById('race'),
                 playerName: document.getElementById('player-name'),
                 deity: document.getElementById('deity'),
                 age: document.getElementById('age'),
                 etherLevel: document.getElementById('ether-level'),
+                initialTrace: document.getElementById('initial-trace'),
+                familyTrace: document.getElementById('family-trace'),
+                alignment: document.getElementById('alignment'),
                 potential: document.getElementById('potential'),
                 awakening: document.getElementById('awakening'),
                 armor: document.getElementById('armor'),
@@ -1752,7 +1772,11 @@
                 const newSheet = {
                     id: Date.now().toString(),
                     characterName,
+                    race: '',
                     playerName,
+                    initialTrace:'',
+                    familyTrace:'',
+                    alignment:'',
                     deity: '',
                     age: '',
                     etherLevel: '1',
@@ -1843,7 +1867,11 @@
             function loadSheetData(sheet) {
                 // Preencher campos básicos
                 elements.characterName.value = sheet.characterName || '';
+                elements.race.value = sheet.race || '';
                 elements.playerName.value = sheet.playerName || '';
+                elements.initialTrace.value = sheet.initialTrace || '';
+                elements.familyTrace.value = sheet.familyTrace || '';
+                elements.alignment.value = sheet.alignment || '';
                 elements.deity.value = sheet.deity || '';
                 elements.age.value = sheet.age || '';
                 elements.etherLevel.value = sheet.etherLevel || '';
@@ -2628,7 +2656,11 @@
                 
                 // Atualizar dados básicos
                 sheet.characterName = elements.characterName.value;
+                sheet.race = elements.race.value;
                 sheet.playerName = elements.playerName.value;
+                sheet.initialTrace = elements.initialTrace.value;
+                sheet.familyTrace = elements.familyTrace.value;
+                sheet.alignment = elements.alignment.value;
                 sheet.deity = elements.deity.value;
                 sheet.age = elements.age.value;
                 sheet.etherLevel = elements.etherLevel.value;
