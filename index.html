@@ -621,7 +621,7 @@
             gap: 8px;
             align-items: center;
         }
-
+        
         .ability-cost span {
             font-size: 0.8rem;
             color: var(--text-secondary);
@@ -643,6 +643,34 @@
         .ability-cost input:focus {
             outline: none;
             border-color: var(--accent-color);
+        }
+
+        /* Novo estilo para o botão de alternância */
+        .resource-toggle {
+            color: var(--accent-color);
+            background-color: var(--bg-darker);
+            border: 1px solid var(--edit-border);
+            padding: 3px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            margin-left: 8px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .resource-toggle.active {
+            color: var(--danger-color);
+        }
+
+        .resource-toggle:hover {
+            border: 1px solid var(--accent-color);
+        }
+
+        .resource-toggle.active:hover {
+            border: 1px solid var(--danger-color);
         }
 
         .ability-desc {
@@ -1766,7 +1794,8 @@
                     type: 'Passiva',
                     duration: 'Duração',
                     range: 'Alcance',
-                    collapsed: false
+                    collapsed: false,
+                    useHP: false // Novo campo para armazenar se usa HP
                 });
                 
                 // Adicionar uma arma padrão
@@ -1848,7 +1877,8 @@
                             ability.type, 
                             ability.duration, 
                             ability.range, 
-                            ability.collapsed
+                            ability.collapsed,
+                            ability.useHP || false // Novo parâmetro para usar HP
                         );
                     });
                 } else {
@@ -1952,7 +1982,7 @@
             }
 
             // Adicionar habilidade/arcana
-            function addAbility(name, ether, grade, description, type, duration, range, collapsed = false) {
+            function addAbility(name, ether, grade, description, type, duration, range, collapsed = false, useHP = false) {
                 const abilityItem = document.createElement('div');
                 abilityItem.className = `ability-item ${collapsed ? 'collapsed' : ''}`;
                 abilityItem.draggable = true;
@@ -1963,10 +1993,15 @@
                             <input type="text" class="editable ability-name-input" value="${name}" placeholder="Nome da Habilidade">
                         </div>
                         <div class="ability-cost">
-                            <span>Éter:</span>
+                            <span class="resource-type">${useHP ? 'Vida:' : 'Éter:'}</span>
                             <input type="text" class="ability-ether editable" value="${ether}">
                             <span>Grau:</span>
                             <input type="text" class="ability-grade editable" value="${grade}">
+                            <button class="resource-toggle ${useHP ? 'active' : ''}" data-resource="${useHP ? 'hp' : 'ether'}">
+                                <span2>Éter</span2>
+                                <span>↔</span>
+                                <span2>Vida</span2>
+                            </button>
                             <button class="ability-use-btn use-ability">Usar</button>
                             <button class="delete-btn delete-ability">×</button>
                         </div>
@@ -1995,6 +2030,15 @@
                         }
                     });
                 }
+                
+                // Adicionar evento para o botão de alternância
+                const resourceToggle = abilityItem.querySelector('.resource-toggle');
+                resourceToggle.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                    this.dataset.resource = this.classList.contains('active') ? 'hp' : 'ether';
+                    updateAbilityCostDisplay(abilityItem);
+                    saveCurrentSheet();
+                });
                 
                 // Adicionar evento para o botão de usar
                 abilityItem.querySelector('.use-ability').addEventListener('click', function() {
@@ -2031,17 +2075,33 @@
                     adjustTextareaHeight(textarea);
                 }, 0);
                 
-                // Atualizar cálculo de éter com presença
-                updateAbilityEtherCost(abilityItem);
+                // Atualizar exibição do custo
+                updateAbilityCostDisplay(abilityItem);
                 
-                // Atualizar quando o valor de éter for alterado
+                // Atualizar quando o valor de custo for alterado
                 abilityItem.querySelector('.ability-ether').addEventListener('input', function() {
-                    updateAbilityEtherCost(abilityItem);
+                    updateAbilityCostDisplay(abilityItem);
                     saveCurrentSheet();
                 });
 
                 // Configurar arrastar e soltar para a habilidade
                 setupAbilityDragAndDrop(abilityItem);
+            }
+
+            // Atualizar exibição do custo da habilidade
+            function updateAbilityCostDisplay(abilityItem) {
+                const resourceToggle = abilityItem.querySelector('.resource-toggle');
+                const isHP = resourceToggle.classList.contains('active');
+                const resourceType = abilityItem.querySelector('.resource-type');
+                const extraSpan = abilityItem.querySelector('.ability-extra');
+                
+                if (isHP) {
+                    resourceType.textContent = 'Vida:';
+                    extraSpan.textContent = ''; // Não mostra cálculo para vida
+                } else {
+                    resourceType.textContent = 'Éter:';
+                    updateAbilityEtherCost(abilityItem);
+                }
             }
 
             // Configurar arrastar e soltar para habilidades
@@ -2096,6 +2156,11 @@
 
             // Atualizar custo de éter considerando presença
             function updateAbilityEtherCost(abilityItem) {
+                const resourceToggle = abilityItem.querySelector('.resource-toggle');
+                const isHP = resourceToggle.classList.contains('active');
+                
+                if (isHP) return; // Não calcula para habilidades que usam HP
+                
                 const presenceSkill = document.getElementById('skill-presença');
                 const etherInput = abilityItem.querySelector('.ability-ether');
                 const extraSpan = abilityItem.querySelector('.ability-extra');
@@ -2113,30 +2178,49 @@
 
             // Usar habilidade/arcana
             function useAbility(abilityItem) {
-                const presenceSkill = document.getElementById('skill-presença');
-                const etherInput = abilityItem.querySelector('.ability-ether');
-                const currentEther = parseInt(elements.etherCurrent.value) || 0;
+                const resourceToggle = abilityItem.querySelector('.resource-toggle');
+                const isHP = resourceToggle.classList.contains('active');
+                const costInput = abilityItem.querySelector('.ability-ether');
+                const currentCost = parseInt(costInput.value) || 0;
                 
-                let etherCost = parseInt(etherInput.value) || 0;
-                
-                // Calcular custo considerando presença
-                if (presenceSkill && presenceSkill.value && parseInt(presenceSkill.value) > 100) {
-                    const presence = parseInt(presenceSkill.value);
-                    etherCost = Math.floor(etherCost * (presence / 100));
+                if (isHP) {
+                    // Usar vida
+                    const currentHP = parseInt(elements.hpCurrent.value) || 0;
+                    if (currentCost > currentHP) {
+                        alert('Vida insuficiente para usar esta habilidade!');
+                        return;
+                    }
+                    
+                    const newHP = Math.max(0, currentHP - currentCost);
+                    elements.hpCurrent.value = newHP;
+                    updateProgressBars();
+                    saveCurrentSheet();
+                    
+                    alert(`Habilidade usada! ${currentCost} de vida consumido.`);
+                } else {
+                    // Usar éter
+                    const presenceSkill = document.getElementById('skill-presença');
+                    let etherCost = parseInt(costInput.value) || 0;
+                    
+                    // Calcular custo considerando presença apenas para éter
+                    if (presenceSkill && presenceSkill.value && parseInt(presenceSkill.value) > 100) {
+                        const presence = parseInt(presenceSkill.value);
+                        etherCost = Math.floor(etherCost * (presence / 100));
+                    }
+                    
+                    const currentEther = parseInt(elements.etherCurrent.value) || 0;
+                    if (etherCost > currentEther) {
+                        alert('Éter insuficiente para usar esta habilidade!');
+                        return;
+                    }
+                    
+                    const newEther = Math.max(0, currentEther - etherCost);
+                    elements.etherCurrent.value = newEther;
+                    updateProgressBars();
+                    saveCurrentSheet();
+                    
+                    alert(`Habilidade usada! ${etherCost} de éter consumido.`);
                 }
-                
-                if (etherCost > currentEther) {
-                    alert('Éter insuficiente para usar esta habilidade!');
-                    return;
-                }
-                
-                // Reduzir éter
-                const newEther = Math.max(0, currentEther - etherCost);
-                elements.etherCurrent.value = newEther;
-                updateProgressBars();
-                saveCurrentSheet();
-                
-                alert(`Habilidade usada! ${etherCost} de éter consumido.`);
             }
 
             // Adicionar arma padrão
@@ -2379,7 +2463,7 @@
                 
                 // Atualizar custos de habilidades
                 document.querySelectorAll('.ability-item').forEach(ability => {
-                    updateAbilityEtherCost(ability);
+                    updateAbilityCostDisplay(ability);
                 });
             }
 
@@ -2570,6 +2654,7 @@
                 // Atualizar habilidades
                 sheet.abilities = [];
                 document.querySelectorAll('.ability-item').forEach(ability => {
+                    const resourceToggle = ability.querySelector('.resource-toggle');
                     sheet.abilities.push({
                         name: ability.querySelector('.ability-name-input').value,
                         ether: ability.querySelector('.ability-ether').value,
@@ -2578,7 +2663,8 @@
                         type: ability.querySelector('.ability-type').value,
                         duration: ability.querySelector('.ability-duration').value,
                         range: ability.querySelector('.ability-range').value,
-                        collapsed: ability.classList.contains('collapsed')
+                        collapsed: ability.classList.contains('collapsed'),
+                        useHP: resourceToggle.classList.contains('active') // Novo campo
                     });
                 });
                 
